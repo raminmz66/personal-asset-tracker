@@ -6,7 +6,7 @@
 
 **Architecture:** Shared pure domain package (ledger math, validation, export schema) tested with Vitest. Hono Worker API owns auth + D1 CRUD. React/Vite PWA is answer-first drill-down UI with IndexedDB snapshot cache and ordered offline write queue (last-write-wins).
 
-**Tech Stack:** TypeScript, npm workspaces, Vitest, Hono, Cloudflare Workers + D1 + Pages, Wrangler, React 19, React Router 7, Vite, `vite-plugin-pwa`, `idb`, Web Crypto (PBKDF2 + HMAC session), Vazirmatn (font decision at Task 8).
+**Tech Stack:** TypeScript, npm workspaces, Vitest, Hono, Cloudflare Workers + D1 + Pages, Wrangler, React 19, React Router 7, Vite, `vite-plugin-pwa`, `idb`, Web Crypto (PBKDF2 + HMAC session), Vazirmatn (font decision at Task 11), Jalali UI dates via `react-multi-date-picker` + `dayjs` (or equivalent) with Gregorian `YYYY-MM-DD` at the API boundary. **No third-party visual design system** — custom components on CSS tokens.
 
 ## Global Constraints
 
@@ -19,6 +19,8 @@
 - Export/import versioned JSON; import is replace-all or reject entirely
 - Calm notebook tokens: page `#F4EFE6`, ink `#3D3428`, muted `#6A5F50`, rule `#CBBFAD`, accent `#0F6B6B`, danger `#8B3A2F`
 - No activity feed, no home FAB, no notifications
+- **No MUI/Mantine/Chakra/shadcn visual kit** — bespoke notebook UI
+- **Dates:** Jalali display/picker in UI; store/transmit Gregorian `YYYY-MM-DD`
 - Specs: `docs/superpowers/specs/2026-07-30-personal-asset-custody-tracker-design.md`, `docs/superpowers/specs/2026-07-31-personal-asset-custody-tracker-ui-design.md`
 
 ---
@@ -62,6 +64,8 @@ apps/web/
   src/App.tsx
   src/styles/tokens.css
   src/api/client.ts
+  src/dates/jalali.ts                 # toGregorianDateString / formatJalali / todayJalali
+  src/components/JalaliDateField.tsx  # react-multi-date-picker wrapper, notebook-styled
   src/sync/cache.ts                   # idb snapshot
   src/sync/outbox.ts                  # ordered offline queue
   src/sync/flush.ts
@@ -71,7 +75,7 @@ apps/web/
   src/routes/Asset.tsx
   src/routes/Settled.tsx
   src/routes/Settings.tsx
-  src/components/*.tsx
+  src/components/*.tsx                # bespoke; no design-system package
 README.md                             # update run/deploy
 ```
 
@@ -765,11 +769,12 @@ body {
 ```
 
 - [ ] **Step 4: Placeholder routes for `/login`, `/`, `/people/:id`, `/assets/:id`, `/people/:id/settled`, `/settings`**
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Add `src/dates/jalali.ts` + Vitest: today → Gregorian `YYYY-MM-DD`; format known Gregorian → expected Jalali string; no visual design-system dependency**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add apps/web package.json package-lock.json
-git commit -m "feat(web): scaffold RTL PWA shell with notebook tokens"
+git commit -m "feat(web): scaffold RTL PWA shell with notebook tokens and Jalali helpers"
 ```
 
 ---
@@ -875,14 +880,15 @@ git commit -m "feat(web): person screen with balance/item sections"
 **Interfaces:**
 - Hero current state; واریز/برگشت or item actions; history list; edit on tap; delete with confirm
 
-- [ ] **Step 1: Balance deposit/return forms (date default today, optional note)**
-- [ ] **Step 2: Show domain/API error for over-return in one Persian line**
-- [ ] **Step 3: Item received/returned actions**
-- [ ] **Step 4: Commit**
+- [ ] **Step 1: Balance deposit/return forms — `JalaliDateField` defaulting to today; submit Gregorian `YYYY-MM-DD` to API; optional note**
+- [ ] **Step 2: History rows format dates with `formatJalali`**
+- [ ] **Step 3: Show domain/API error for over-return in one Persian line**
+- [ ] **Step 4: Item received/returned actions (same date field)**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add apps/web
-git commit -m "feat(web): asset history and capture actions"
+git commit -m "feat(web): asset history and Jalali capture actions"
 ```
 
 ---
@@ -979,6 +985,8 @@ git commit -m "docs: add local smoke checklist for custody tracker"
 | Settings gear | 14, 18 |
 | Calm notebook + teal accent | 11 |
 | Vazirmatn decision point | 11 Step 2 |
+| No third-party visual design system | 11, Global Constraints |
+| Jalali UI / Gregorian storage | 11 Step 5, 16 |
 | Domain tests | 2–5 |
 | Cascade delete | 6 migration + 8–9 |
 

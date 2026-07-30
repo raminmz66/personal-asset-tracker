@@ -36,6 +36,8 @@ Usage is rare (~2–3×/month) but must feel immediate and trustworthy. Persian 
 | Visual personality | Calm notebook |
 | Accent | Deep teal `#0F6B6B` |
 | Fonts | Deferred — candidate **VazirMatn** (decide at frontend start / first UI polish) |
+| Design system | **No third-party visual kit** — custom Calm notebook components on CSS tokens; optional headless primitives only if needed (e.g. native `<dialog>` / small a11y helper) |
+| Dates | **Jalali (شمسی) in the UI** for display + picking; **Gregorian `YYYY-MM-DD` in API/DB/export** |
 
 ---
 
@@ -123,6 +125,18 @@ Avoid: purple gradients, loud pill clusters, multi-layer card shadows, emoji dec
 - Sync banner show/hide
 - No celebratory or decorative motion
 
+### 5.5 Component approach (not a design system library)
+- Build small local components (`PersonRow`, `AssetRow`, `SyncBanner`, forms) styled with tokens
+- Do **not** adopt MUI / Mantine / Chakra / default shadcn theming — their visual language fights the notebook look and adds weight for a single-user app
+- Prefer native elements; add a headless helper only when accessibility requires it (modal focus trap, etc.)
+
+### 5.6 Dates (Jalali)
+- User-facing dates: Persian calendar (display + picker)
+- Persistence: Gregorian ISO date `YYYY-MM-DD` in D1, API, and export JSON
+- Default new transaction date: **today** (Jalali shown, Gregorian stored)
+- History lists show Jalali dates (e.g. ۱۲ تیر ۱۴۰۴)
+- Library choice is an implementation detail in the plan (Jalali picker + conversion); keep Gregorian at the boundary
+
 ---
 
 ## 6. States & friction
@@ -164,9 +178,8 @@ Domain rules (balance vs item, deposit/return, settled detection, export/import,
 
 ## 9. Out of scope for this UI spec
 
-- Frontend framework choice
-- Exact component library
-- Final font packaging and CDN/self-host details
+- Frontend framework choice (locked in implementation plan)
+- Final font packaging details beyond Vazirmatn as default candidate
 - Desktop layout refinements beyond “usable”
 - Accessibility audit checklist (follow platform defaults; deepen in implementation if needed)
 
