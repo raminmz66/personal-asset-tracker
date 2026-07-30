@@ -49,5 +49,8 @@ tmp/
 temp/
 .cache/
 
+# Brainstorming companion sessions
+.superpowers/
+
 # TypeScript
 *.tsbuildinfo

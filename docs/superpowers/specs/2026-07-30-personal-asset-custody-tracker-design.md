@@ -1,6 +1,7 @@
 # Personal Asset Custody Tracker — Architecture & Data Design
 
-> **Status:** Draft for review  
+> **Status:** Approved (2026-07-30)  
+
 > **Date:** 2026-07-30  
 > **Source:** `doc/PRD.md` + brainstorming decisions  
 > **Scope of this doc:** Architecture, data model, sync, auth, export/import, errors, testing  
