@@ -1,6 +1,7 @@
 # Personal Asset Custody Tracker — UI/UX Design
 
-> **Status:** Draft for review  
+> **Status:** Approved (2026-07-31)  
+
 > **Date:** 2026-07-31  
 > **Depends on:** [Architecture & data design](./2026-07-30-personal-asset-custody-tracker-design.md) (Approved)  
 > **Scope:** Information architecture, screens, actions, visual system, states  
