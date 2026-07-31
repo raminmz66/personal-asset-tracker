@@ -11,7 +11,9 @@
   },
   "dependencies": {
     "@fontsource/vazirmatn": "^5.2.8",
+    "@pat/domain": "^0.0.0",
     "dayjs": "^1.11.13",
+    "idb": "^8.0.3",
     "jalaliday": "^2.3.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",

@@ -1,5 +1,6 @@
 import { createBrowserRouter, Outlet, RouterProvider } from 'react-router'
 import { AuthGate } from './auth/AuthGate'
+import { SyncProvider } from './sync/SyncContext'
 import { BalancePage } from './pages/BalancePage'
 import { HomePage } from './pages/HomePage'
 import { PersonPage } from './pages/PersonPage'
@@ -18,7 +19,9 @@ function AppShell() {
 function ProtectedLayout() {
   return (
     <AuthGate>
-      <Outlet />
+      <SyncProvider>
+        <Outlet />
+      </SyncProvider>
     </AuthGate>
   )
 }
