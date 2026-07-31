@@ -4,7 +4,7 @@ import { SyncProvider } from './sync/SyncContext'
 import { Balance } from './routes/Balance'
 import { Home } from './routes/Home'
 import { Person } from './routes/Person'
-import { SettledPage } from './pages/SettledPage'
+import { Settled } from './routes/Settled'
 import { SettingsPage } from './pages/SettingsPage'
 import { Login } from './routes/Login'
 
@@ -35,7 +35,7 @@ const router = createBrowserRouter([
         element: <ProtectedLayout />,
         children: [
           { path: '/', element: <Home /> },
-          { path: '/people/:id/settled', element: <SettledPage /> },
+          { path: '/people/:id/settled', element: <Settled /> },
           { path: '/people/:id', element: <Person /> },
           { path: '/balances/:id', element: <Balance /> },
           { path: '/settings', element: <SettingsPage /> },

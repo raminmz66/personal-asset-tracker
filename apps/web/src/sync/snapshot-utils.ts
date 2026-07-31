@@ -1,6 +1,7 @@
 import {
   balanceQuantity,
   isBalanceActive,
+  isBalanceSettled,
   personShortStatus,
   type Transaction,
 } from '@pat/domain'
@@ -89,6 +90,24 @@ export function activeBalancesForPerson(
     const txs = snapshot.transactions.filter((t) => t.balanceId === balance.id)
     const quantity = balanceQuantity(txs)
     if (isBalanceActive(quantity)) {
+      items.push({ id: balance.id, label: balance.label, quantity })
+    }
+  }
+
+  return items.sort((a, b) => a.label.localeCompare(b.label, 'fa'))
+}
+
+export function settledBalancesForPerson(
+  snapshot: Snapshot,
+  personId: string,
+): BalanceListItem[] {
+  const balances = snapshot.balances.filter((b) => b.personId === personId)
+  const items: BalanceListItem[] = []
+
+  for (const balance of balances) {
+    const txs = snapshot.transactions.filter((t) => t.balanceId === balance.id)
+    const quantity = balanceQuantity(txs)
+    if (isBalanceSettled(quantity)) {
       items.push({ id: balance.id, label: balance.label, quantity })
     }
   }
