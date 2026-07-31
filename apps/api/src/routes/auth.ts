@@ -11,6 +11,7 @@ import {
   verifyPassword,
   verifySession,
 } from "../auth";
+import { requireAuth } from "../middleware/requireAuth";
 
 const auth = new Hono<{ Bindings: Bindings }>();
 
@@ -102,11 +103,7 @@ auth.post("/logout", (c) => {
   return c.json({ ok: true });
 });
 
-auth.post("/password", async (c) => {
-  if (!(await isAuthenticated(c))) {
-    return c.json({ error: "unauthorized" }, 401);
-  }
-
+auth.post("/password", requireAuth, async (c) => {
   const stored = await getPasswordHash(c.env.DB);
   if (stored === null) {
     return c.json({ error: "setup_required" }, 401);
