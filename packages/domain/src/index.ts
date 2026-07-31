@@ -9,3 +9,8 @@ export {
   assertPositiveAmount,
   assertBalanceReturnAllowed,
 } from "./validate";
+export {
+  EXPORT_SCHEMA_VERSION,
+  buildExportDoc,
+  parseExportDoc,
+} from "./export-schema";
