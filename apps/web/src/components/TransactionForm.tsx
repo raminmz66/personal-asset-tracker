@@ -4,6 +4,8 @@ import {
   parseJalaliToGregorian,
   todayJalali,
 } from '../dates/jalali'
+import { canonicalAmount, parseAmountInput } from '../format/digits'
+import { AmountField } from './AmountField'
 import { JalaliDateField } from './JalaliDateField'
 import { SegmentedControl } from './SegmentedControl'
 
@@ -39,7 +41,7 @@ export function TransactionForm({
 }: TransactionFormProps) {
   const [type, setType] = useState<'deposit' | 'return'>(initialType)
   const [amount, setAmount] = useState(
-    initialAmount !== undefined ? String(initialAmount) : '',
+    initialAmount !== undefined ? canonicalAmount(String(initialAmount)) : '',
   )
   const [jalaliDate, setJalaliDate] = useState(
     initialDate ? formatGregorianToJalali(initialDate) : todayJalali(),
@@ -49,7 +51,7 @@ export function TransactionForm({
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    const parsedAmount = Number(amount.replace(/,/g, ''))
+    const parsedAmount = parseAmountInput(amount)
     const gregorianDate = parseJalaliToGregorian(jalaliDate)
     if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
       setLocalError('مبلغ درست وارد کن.')
@@ -92,12 +94,10 @@ export function TransactionForm({
         />
       )}
 
-      <input
+      <AmountField
         className="tx-form-input"
-        type="text"
-        inputMode="decimal"
         value={amount}
-        onChange={(e) => setAmount(e.target.value)}
+        onChange={setAmount}
         placeholder="مبلغ"
         disabled={submitting}
         required

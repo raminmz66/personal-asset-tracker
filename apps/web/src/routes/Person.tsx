@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router'
 import type { Balance, Transaction } from '@pat/domain'
+import { AmountField } from '../components/AmountField'
 import { BalanceRow } from '../components/BalanceRow'
 import { SyncBanner } from '../components/SyncBanner'
 import { parseJalaliToGregorian, todayJalali } from '../dates/jalali'
+import { parseAmountInput } from '../format/digits'
 import { JalaliDateField } from '../components/JalaliDateField'
 import { getSnapshot, setSnapshot } from '../sync/cache'
 import {
@@ -65,7 +67,7 @@ export function Person() {
     if (!id) return
 
     const trimmedLabel = label.trim()
-    const parsedAmount = Number(amount.replace(/,/g, ''))
+    const parsedAmount = parseAmountInput(amount)
     const gregorianDate = parseJalaliToGregorian(jalaliDate)
 
     if (!trimmedLabel || !Number.isFinite(parsedAmount) || parsedAmount <= 0) {
@@ -185,12 +187,10 @@ export function Person() {
                   disabled={submitting}
                   required
                 />
-                <input
+                <AmountField
                   className="person-add-input"
-                  type="text"
-                  inputMode="decimal"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  onChange={setAmount}
                   placeholder="مبلغ"
                   disabled={submitting}
                   required
