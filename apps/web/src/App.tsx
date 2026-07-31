@@ -1,10 +1,11 @@
 import { createBrowserRouter, Outlet, RouterProvider } from 'react-router'
+import { AuthGate } from './auth/AuthGate'
 import { BalancePage } from './pages/BalancePage'
 import { HomePage } from './pages/HomePage'
-import { LoginPage } from './pages/LoginPage'
 import { PersonPage } from './pages/PersonPage'
 import { SettledPage } from './pages/SettledPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { Login } from './routes/Login'
 
 function AppShell() {
   return (
@@ -14,16 +15,29 @@ function AppShell() {
   )
 }
 
+function ProtectedLayout() {
+  return (
+    <AuthGate>
+      <Outlet />
+    </AuthGate>
+  )
+}
+
 const router = createBrowserRouter([
   {
     element: <AppShell />,
     children: [
-      { path: '/login', element: <LoginPage /> },
-      { path: '/', element: <HomePage /> },
-      { path: '/people/:id/settled', element: <SettledPage /> },
-      { path: '/people/:id', element: <PersonPage /> },
-      { path: '/balances/:id', element: <BalancePage /> },
-      { path: '/settings', element: <SettingsPage /> },
+      { path: '/login', element: <Login /> },
+      {
+        element: <ProtectedLayout />,
+        children: [
+          { path: '/', element: <HomePage /> },
+          { path: '/people/:id/settled', element: <SettledPage /> },
+          { path: '/people/:id', element: <PersonPage /> },
+          { path: '/balances/:id', element: <BalancePage /> },
+          { path: '/settings', element: <SettingsPage /> },
+        ],
+      },
     ],
   },
 ])
