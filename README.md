@@ -86,9 +86,15 @@ On first deploy, Wrangler creates the Pages project `personal-asset-tracker-web`
 
 ### 4. Route `/api` to the Worker
 
-In the Cloudflare dashboard (**Workers & Pages → your API Worker → Settings → Domains & Routes**), add a route on your Pages hostname:
+**Default (no custom domain):** Pages Function + service binding (already in repo).
 
-- Pattern: `your-app.pages.dev/api/*` (or your custom domain)
+- `apps/web/functions/api/[[path]].ts` proxies `/api/*` to Worker `personal-asset-tracker-api`
+- `apps/web/wrangler.jsonc` declares the `API` service binding
+- Redeploy web after API Worker exists: `npm run deploy -w @pat/web`
+
+**Optional (custom domain on a Cloudflare zone):** add a Worker route instead:
+
+- Pattern: `your-domain.example/api/*`
 - Worker: `personal-asset-tracker-api`
 
 The SPA calls `/api/...` on the same origin; Pages serves the app, the Worker handles API requests.
