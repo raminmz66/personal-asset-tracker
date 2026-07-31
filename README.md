@@ -6,7 +6,7 @@ This is **not** accounting software, and **not** a tool/inventory tracker. v1 is
 
 ## Status
 
-Design complete (architecture + UI, money-only). Implementation plan ready.
+Implementation on branch `feat/money-custody-app` (money-only v1). Design + plan docs are the source of truth for product decisions.
 
 ## Docs
 
@@ -15,6 +15,87 @@ Design complete (architecture + UI, money-only). Implementation plan ready.
 - [UI/UX design](docs/superpowers/specs/2026-07-31-personal-asset-custody-tracker-ui-design.md)
 - [Implementation plan](docs/superpowers/plans/2026-07-31-personal-asset-custody-tracker.md)
 - [UI mockups (money-only)](docs/superpowers/mockups/)
+
+## Development
+
+```bash
+npm install
+npm test              # run @pat/domain tests
+npm run test:all      # run tests in all workspaces
+```
+
+### Local dev (API + web)
+
+One command (starts API + web, opens the browser; Ctrl+C stops both):
+
+```bash
+npm run dev
+```
+
+Or run separately:
+
+```bash
+npm run dev:api   # Hono Worker on http://127.0.0.1:8787 (Wrangler + local D1)
+npm run dev:web   # Vite on http://localhost:5173 — proxies /api to the Worker
+```
+
+Copy `apps/api/.dev.vars.example` to `apps/api/.dev.vars` and set `SESSION_SECRET` for local auth (`npm run dev` does this automatically if missing).
+
+## Deploy (Cloudflare)
+
+Requires a Cloudflare account, `wrangler login`, and a custom domain (or `*.pages.dev` + Worker route on the same hostname).
+
+### 1. D1 database
+
+From `apps/api`:
+
+```bash
+wrangler d1 create pat-db
+```
+
+Copy the returned `database_id` into `apps/api/wrangler.jsonc` (replace `local-dev-placeholder`).
+
+Apply migrations:
+
+```bash
+wrangler d1 migrations apply pat-db --remote
+```
+
+### 2. API Worker secrets & deploy
+
+From `apps/api`:
+
+```bash
+wrangler secret put SESSION_SECRET   # long random string for session signing
+npm run deploy
+```
+
+Note the Worker URL (e.g. `personal-asset-tracker-api.<account>.workers.dev`).
+
+### 3. Pages (PWA frontend)
+
+From `apps/web`:
+
+```bash
+npm run deploy   # build + wrangler pages deploy dist
+```
+
+On first deploy, Wrangler creates the Pages project `personal-asset-tracker-web`.
+
+`public/_routes.json` excludes `/api` and `/api/*` so those paths are not served as static files.
+
+### 4. Route `/api` to the Worker
+
+In the Cloudflare dashboard (**Workers & Pages → your API Worker → Settings → Domains & Routes**), add a route on your Pages hostname:
+
+- Pattern: `your-app.pages.dev/api/*` (or your custom domain)
+- Worker: `personal-asset-tracker-api`
+
+The SPA calls `/api/...` on the same origin; Pages serves the app, the Worker handles API requests.
+
+### 5. Verify PWA
+
+Open the Pages URL on a phone → browser “Add to Home Screen”. Manifest name: **امانت‌ها**; theme `#0f6b6b`, background `#f4efe6`.
 
 ## Stack (locked)
 
@@ -25,6 +106,28 @@ Design complete (architecture + UI, money-only). Implementation plan ready.
 - **Auth:** Password / PIN, ~30-day session cookie
 - **Portability:** JSON export / import (replace-all)
 - **Config:** `wrangler.jsonc`
+
+## Local smoke checklist
+
+Run `npm run dev:api` and `npm run dev:web`, then verify:
+
+- [ ] Setup password (first visit) / login
+- [ ] Add person علی
+- [ ] Add USDT with initial 200 + return 50 → shows 150
+- [ ] Full return USDT → disappears from active; appears under تسویه‌شده‌ها
+- [ ] Export → import replace-all round-trip
+- [ ] Toggle offline in DevTools → SyncBanner; enqueue a write; go online → flush
+
+### Smoke results (2026-07-31)
+
+| Check | Result |
+|---|---|
+| Setup password + login | Pass (API) |
+| Add person علی | Pass (API) |
+| USDT 200 → return 50 → qty 150 | Pass (API) |
+| Full return → active empty, settled lists USDT | Pass (API) |
+| Export → wipe import → restore import | Pass (API) |
+| Offline banner + outbox flush | Pass (outbox unit tests); UI DevTools toggle deferred to device |
 
 ## License
 

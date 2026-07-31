@@ -30,7 +30,7 @@ Capture (واریز/برگشت) happens **after** choosing a person. Persian RTL
 | Settings | Gear on home header |
 | Navigation | Drill-down: Home → Person → Balance |
 | Visual | Calm notebook; accent `#0F6B6B` |
-| Fonts | Vazirmatn default |
+| Fonts | Vazirmatn body; Lalezar titles/names |
 | Design system | None — custom components on CSS tokens |
 | Dates | Jalali UI; Gregorian `YYYY-MM-DD` storage |
 
@@ -89,7 +89,7 @@ Change password · Export JSON · Import replace-all (strong confirm).
 | Accent | `#0F6B6B` | Actions / positive amounts |
 | Danger | `#8B3A2F` | Destructive |
 
-Typography: Persian RTL, Vazirmatn. Notebook rules over heavy cards. Light RTL push motion only.
+Typography: Persian RTL; Vazirmatn body; Lalezar for titles and names. Notebook rules over heavy cards. Light RTL push motion only.
 
 Dates: Jalali display/picker; Gregorian at API boundary.
 

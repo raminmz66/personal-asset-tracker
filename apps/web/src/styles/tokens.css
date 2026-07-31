@@ -1,0 +1,20 @@
+:root {
+  --page: #f4efe6;
+  --ink: #3d3428;
+  --muted: #6a5f50;
+  --rule: #cbbfad;
+  --accent: #0f6b6b;
+  --danger: #8b3a2f;
+  --text-amount: 3.25rem;
+  --text-name: 1.2rem;
+  --text-title: 1.125rem;
+  --text-action: 0.9375rem;
+  --text-status: 0.8125rem;
+  --text-meta: 0.75rem;
+  --font-display: Lalezar, Vazirmatn, Tahoma, sans-serif;
+}
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+}
