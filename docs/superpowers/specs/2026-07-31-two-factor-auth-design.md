@@ -106,22 +106,34 @@ Callers pass `lastStep = -1` when no step has been consumed yet (fresh enrollmen
 
 ## 5. Throttle module — `apps/api/src/throttle.ts`
 
+Split into a **pure core** and a **thin D1 layer**. The decision logic is where the bugs live, so it stays free of I/O and gets real unit tests; the persistence layer is two trivial statements.
+
 ```ts
 export const MAX_FAILURES = 5
 export const LOCK_DURATION_MS = 15 * 60 * 1000
 
-export function checkThrottle(
-  db: D1Database,
-  nowMs: number,
-): Promise<{ locked: boolean; retryAfterSeconds: number }>
+export type ThrottleState = { failedCount: number; lockedUntilMs: number | null }
+export const CLEARED_STATE: ThrottleState
 
-export function recordFailure(db: D1Database, nowMs: number): Promise<void>
-export function resetThrottle(db: D1Database): Promise<void>
+// pure core — no I/O, fully unit-tested
+export function evaluateThrottle(
+  state: ThrottleState,
+  nowMs: number,
+): { locked: boolean; retryAfterSeconds: number }
+
+export function afterFailure(state: ThrottleState, nowMs: number): ThrottleState
+
+// thin D1 layer
+export function loadThrottle(db: D1Database): Promise<ThrottleState>
+export function saveThrottle(db: D1Database, state: ThrottleState): Promise<void>
 ```
 
-- `checkThrottle` — reads the `global` row; locked when `locked_until > now`. `retryAfterSeconds` is the whole seconds remaining, rounded up. An expired lock reports unlocked.
-- `recordFailure` — upserts the row incrementing `failed_count`. On reaching `MAX_FAILURES` it sets `locked_until = now + LOCK_DURATION_MS` and resets `failed_count` to `0`, so the next lock needs another five failures rather than triggering on every subsequent attempt.
-- `resetThrottle` — clears `failed_count` and `locked_until` after any successful login.
+- `evaluateThrottle` — locked when `lockedUntilMs > nowMs`. `retryAfterSeconds` is the remaining whole seconds, rounded up; `0` when unlocked. An expired lock reports unlocked without needing a write.
+- `afterFailure` — increments `failedCount`. On reaching `MAX_FAILURES` it returns `{ failedCount: 0, lockedUntilMs: nowMs + LOCK_DURATION_MS }`, so the next lock requires another five failures instead of re-locking on every subsequent attempt.
+- `loadThrottle` — reads the `global` row, mapping a missing row to `CLEARED_STATE` and parsing `locked_until` to epoch ms (an unparseable value maps to `null`).
+- `saveThrottle` — one upsert on `id = 'global'`.
+
+Callers compose them: `load → evaluate` on entry, and `save(afterFailure(state, now))` or `save(CLEARED_STATE)` on the way out.
 
 Every login attempt costs one D1 read and at most one write. Acceptable for single-user traffic.
 
@@ -268,12 +280,15 @@ Plus:
 
 ### 9.2 `apps/api/tests/throttle.test.ts`
 
-Uses an in-memory fake `D1Database` implementing the `prepare().bind().first()/run()` surface the module uses — the existing suite has no D1 harness, so this fake is part of the work.
+Tests the pure core only — no D1 fake needed, which is the point of the split in §5.
 
-- Four failures leave it unlocked; the fifth locks it.
-- `retryAfterSeconds` is positive inside the window and the lock reports unlocked once `nowMs` passes `locked_until`.
-- `resetThrottle` clears both fields.
-- `failed_count` resets to 0 when the lock is applied.
+- Four successive `afterFailure` calls leave `evaluateThrottle` unlocked; the fifth locks it.
+- `retryAfterSeconds` is positive inside the lock window, and `evaluateThrottle` reports unlocked once `nowMs` passes `lockedUntilMs`.
+- `afterFailure` resets `failedCount` to `0` at the moment it applies the lock.
+- `CLEARED_STATE` evaluates as unlocked with `retryAfterSeconds === 0`.
+- A state with `lockedUntilMs: null` is never locked regardless of `failedCount`.
+
+`loadThrottle` / `saveThrottle` are left to the manual verification in §9.4 — they are two statements with no branching worth a fake.
 
 ### 9.3 Web
 
