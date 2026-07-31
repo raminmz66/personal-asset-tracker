@@ -29,14 +29,14 @@ html {
 
 .page h1 {
   margin: 0 0 0.5rem;
-  font-size: 1.25rem;
+  font-size: var(--text-title);
   font-weight: 700;
 }
 
 .page p {
   margin: 0;
   color: var(--muted);
-  font-size: 0.875rem;
+  font-size: var(--text-meta);
 }
 
 .auth-loading {
@@ -84,7 +84,7 @@ html {
 }
 
 .auth-label {
-  font-size: 0.8125rem;
+  font-size: var(--text-status);
   font-weight: 700;
   color: var(--muted);
 }
@@ -109,7 +109,7 @@ html {
 .auth-error {
   margin: 0 !important;
   color: var(--danger) !important;
-  font-size: 0.8125rem !important;
+  font-size: var(--text-status) !important;
 }
 
 .auth-submit {
@@ -167,7 +167,7 @@ html {
   color: var(--muted);
   text-decoration: none;
   text-align: left;
-  font-size: 1.125rem;
+  font-size: var(--text-title);
   line-height: 1;
 }
 
@@ -208,7 +208,7 @@ html {
   margin: 1rem 0;
   text-align: center;
   color: var(--muted);
-  font-size: 0.875rem;
+  font-size: var(--text-meta);
 }
 
 .home-add {
@@ -264,7 +264,7 @@ html {
   background: var(--page);
   color: var(--ink);
   font: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--text-status);
   cursor: pointer;
 }
 
@@ -278,7 +278,7 @@ html {
 .home-add-error {
   margin: 0;
   color: var(--danger);
-  font-size: 0.75rem;
+  font-size: var(--text-meta);
   text-align: center;
 }
 
@@ -401,7 +401,7 @@ html {
   margin: 1rem 0;
   text-align: center;
   color: var(--muted);
-  font-size: 0.875rem;
+  font-size: var(--text-meta);
 }
 
 .person-add-form {
@@ -442,7 +442,7 @@ html {
   background: var(--page);
   color: var(--ink);
   font: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--text-status);
   cursor: pointer;
 }
 
@@ -456,7 +456,7 @@ html {
 .person-add-error {
   margin: 0;
   color: var(--danger);
-  font-size: 0.75rem;
+  font-size: var(--text-meta);
   text-align: center;
 }
 
@@ -567,7 +567,7 @@ html {
   background: none;
   color: inherit;
   font: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--text-status);
   text-align: right;
   cursor: pointer;
 }
@@ -579,7 +579,7 @@ html {
 
 .balance-tx-date {
   margin-top: 0.125rem;
-  font-size: 0.6875rem;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
@@ -600,7 +600,7 @@ html {
   margin: 1rem 0;
   text-align: center;
   color: var(--muted);
-  font-size: 0.875rem;
+  font-size: var(--text-meta);
 }
 
 .balance-delete {
@@ -688,7 +688,7 @@ button.jalali-date-field {
   justify-content: space-between;
   align-items: center;
   font-weight: 700;
-  font-size: 0.8125rem;
+  font-size: var(--text-status);
   margin-bottom: 0.5rem;
 }
 
@@ -710,7 +710,7 @@ button.jalali-date-field {
 }
 
 .jalali-date-weekdays {
-  font-size: 0.625rem;
+  font-size: var(--text-meta);
   color: var(--muted);
   margin-bottom: 0.25rem;
 }
@@ -719,7 +719,7 @@ button.jalali-date-field {
   border: none;
   background: transparent;
   font: inherit;
-  font-size: 0.75rem;
+  font-size: var(--text-meta);
   padding: 0.4rem 0;
   border-radius: 8px;
   cursor: pointer;
@@ -744,7 +744,7 @@ button.jalali-date-field {
   background: transparent;
   color: var(--accent);
   font: inherit;
-  font-size: 0.75rem;
+  font-size: var(--text-meta);
   font-weight: 700;
   cursor: pointer;
 }
@@ -757,7 +757,7 @@ button.jalali-date-field {
 }
 
 .tx-form-title {
-  font-size: 0.8125rem;
+  font-size: var(--text-status);
   font-weight: 700;
   color: var(--muted);
   text-align: center;
@@ -777,7 +777,7 @@ button.jalali-date-field {
   background: transparent;
   color: var(--muted);
   font: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--text-status);
   cursor: pointer;
 }
 
@@ -806,7 +806,7 @@ button.jalali-date-field {
   background: var(--page);
   color: var(--ink);
   font: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--text-status);
   cursor: pointer;
 }
 
@@ -820,7 +820,7 @@ button.jalali-date-field {
 .tx-form-error {
   margin: 0;
   color: var(--danger);
-  font-size: 0.75rem;
+  font-size: var(--text-meta);
   text-align: center;
 }
 
@@ -867,14 +867,14 @@ button.jalali-date-field {
 
 .settings-sec-title {
   margin: 0 0 0.5rem;
-  font-size: 0.8125rem;
+  font-size: var(--text-status);
   font-weight: 700;
   color: var(--muted);
 }
 
 .settings-lead {
   margin: 0 0 0.75rem;
-  font-size: 0.8125rem;
+  font-size: var(--text-status);
   color: var(--muted);
   line-height: 1.5;
 }
@@ -886,7 +886,7 @@ button.jalali-date-field {
 }
 
 .settings-label {
-  font-size: 0.75rem;
+  font-size: var(--text-meta);
   font-weight: 700;
   color: var(--muted);
 }
@@ -917,7 +917,7 @@ button.jalali-date-field {
   color: #f4efe6;
   font: inherit;
   font-weight: 700;
-  font-size: 0.8125rem;
+  font-size: var(--text-status);
   cursor: pointer;
 }
 
@@ -941,13 +941,13 @@ button.jalali-date-field {
 .settings-error {
   margin: 0;
   color: var(--danger);
-  font-size: 0.75rem;
+  font-size: var(--text-meta);
 }
 
 .settings-success {
   margin: 0;
   color: var(--accent);
-  font-size: 0.75rem;
+  font-size: var(--text-meta);
 }
 
 .settings-file {
@@ -964,7 +964,7 @@ button.jalali-date-field {
   color: var(--danger);
   font: inherit;
   font-weight: 700;
-  font-size: 0.8125rem;
+  font-size: var(--text-status);
   cursor: pointer;
 }
 
