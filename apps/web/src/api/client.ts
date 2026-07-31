@@ -1,14 +1,33 @@
+import type { Person } from '@pat/domain'
+
 export type AuthStatus = {
   setupRequired: boolean
   authenticated: boolean
 }
 
+export type PersonWithCount = Person & { activeBalanceCount: number }
+
 type ApiError = { error: string }
+
+type FetchResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; status: number; error: string }
+
+async function parseError(res: Response): Promise<string> {
+  let error = 'request_failed'
+  try {
+    const body = (await res.json()) as ApiError
+    if (body.error) error = body.error
+  } catch {
+    /* empty body */
+  }
+  return error
+}
 
 async function authFetch<T>(
   path: string,
   init?: RequestInit,
-): Promise<{ ok: true; data: T } | { ok: false; status: number; error: string }> {
+): Promise<FetchResult<T>> {
   const res = await fetch(`/api/auth${path}`, {
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
@@ -20,14 +39,24 @@ async function authFetch<T>(
     return { ok: true, data }
   }
 
-  let error = 'request_failed'
-  try {
-    const body = (await res.json()) as ApiError
-    if (body.error) error = body.error
-  } catch {
-    /* empty body */
+  return { ok: false, status: res.status, error: await parseError(res) }
+}
+
+async function apiFetch<T>(
+  path: string,
+  init?: RequestInit,
+): Promise<FetchResult<T>> {
+  const res = await fetch(`/api${path}`, {
+    credentials: 'include',
+    ...init,
+  })
+
+  if (res.ok) {
+    const data = (await res.json()) as T
+    return { ok: true, data }
   }
-  return { ok: false, status: res.status, error }
+
+  return { ok: false, status: res.status, error: await parseError(res) }
 }
 
 export const api = {
@@ -49,4 +78,30 @@ export const api = {
     authFetch<{ ok: true }>('/logout', {
       method: 'POST',
     }),
+
+  people: {
+    list: () => apiFetch<PersonWithCount[]>('/people'),
+
+    get: (id: string) => apiFetch<PersonWithCount>(`/people/${id}`),
+
+    create: (name: string, note?: string | null) =>
+      apiFetch<PersonWithCount>('/people', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, note: note ?? null }),
+      }),
+
+    update: (
+      id: string,
+      patch: { name?: string; note?: string | null },
+    ) =>
+      apiFetch<PersonWithCount>(`/people/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      }),
+
+    delete: (id: string) =>
+      apiFetch<{ ok: true }>(`/people/${id}`, { method: 'DELETE' }),
+  },
 }

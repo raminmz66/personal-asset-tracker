@@ -2,7 +2,7 @@ import { createBrowserRouter, Outlet, RouterProvider } from 'react-router'
 import { AuthGate } from './auth/AuthGate'
 import { SyncProvider } from './sync/SyncContext'
 import { BalancePage } from './pages/BalancePage'
-import { HomePage } from './pages/HomePage'
+import { Home } from './routes/Home'
 import { PersonPage } from './pages/PersonPage'
 import { SettledPage } from './pages/SettledPage'
 import { SettingsPage } from './pages/SettingsPage'
@@ -34,7 +34,7 @@ const router = createBrowserRouter([
       {
         element: <ProtectedLayout />,
         children: [
-          { path: '/', element: <HomePage /> },
+          { path: '/', element: <Home /> },
           { path: '/people/:id/settled', element: <SettledPage /> },
           { path: '/people/:id', element: <PersonPage /> },
           { path: '/balances/:id', element: <BalancePage /> },
