@@ -8,6 +8,7 @@ import {
 } from '@pat/domain'
 import { apiErrorMessage } from '../api/client'
 import { SyncBanner } from '../components/SyncBanner'
+import { ConfirmPress } from '../components/ConfirmPress'
 import {
   TransactionForm,
   type TransactionFormValues,
@@ -191,8 +192,6 @@ export function Balance() {
   }
 
   async function handleDelete(tx: Transaction) {
-    if (!window.confirm('حذف این تراکنش؟')) return
-
     setSubmitting(true)
     setError(null)
 
@@ -324,14 +323,13 @@ export function Balance() {
             )}
 
             {formMode === 'edit' && editingTx && (
-              <button
-                type="button"
-                className="balance-delete"
-                onClick={() => void handleDelete(editingTx)}
+              <ConfirmPress
+                label="حذف تراکنش"
+                confirmLabel="مطمئنی؟ دوباره بزن"
+                onConfirm={() => void handleDelete(editingTx)}
                 disabled={submitting}
-              >
-                حذف تراکنش
-              </button>
+                className="balance-delete"
+              />
             )}
           </>
         )}

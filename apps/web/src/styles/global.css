@@ -910,6 +910,12 @@ button.jalali-date-field {
   border: 1px solid var(--accent);
 }
 
+.settings-btn.confirm-press--armed {
+  background: var(--danger);
+  color: #f4efe6;
+  border-color: var(--danger);
+}
+
 .settings-error {
   margin: 0;
   color: var(--danger);

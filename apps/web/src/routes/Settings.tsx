@@ -1,13 +1,11 @@
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { api, apiErrorMessage } from '../api/client'
+import { ConfirmPress } from '../components/ConfirmPress'
 import { SyncBanner } from '../components/SyncBanner'
 import { todayGregorian } from '../dates/jalali'
 import { formatRelativeFa } from '../dates/relative-fa'
 import { useSync } from '../sync/SyncContext'
-
-const IMPORT_CONFIRM =
-  'همهٔ داده‌های فعلی حذف و با فایل پشتیبان جایگزین می‌شن.\n\nاین کار برگشت نداره. ادامه می‌دی؟'
 
 export function Settings() {
   const navigate = useNavigate()
@@ -90,8 +88,6 @@ export function Settings() {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
-
-    if (!window.confirm(IMPORT_CONFIRM)) return
 
     setImportError(null)
     setImportSuccess(null)
@@ -234,14 +230,13 @@ export function Settings() {
           />
           {importError && <p className="settings-error">{importError}</p>}
           {importSuccess && <p className="settings-success">{importSuccess}</p>}
-          <button
-            type="button"
-            className="settings-btn settings-btn--ghost"
-            onClick={handleImportClick}
+          <ConfirmPress
+            label={importing ? '…' : 'انتخاب فایل و وارد کردن'}
+            confirmLabel="همه داده پاک می‌شه — تأیید"
+            onConfirm={handleImportClick}
             disabled={importing}
-          >
-            {importing ? '…' : 'انتخاب فایل و وارد کردن'}
-          </button>
+            className="settings-btn settings-btn--ghost"
+          />
         </section>
 
         <section className="settings-section settings-section--last">
