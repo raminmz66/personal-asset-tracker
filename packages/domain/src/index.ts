@@ -4,3 +4,8 @@ export {
   isBalanceSettled,
   isBalanceActive,
 } from "./ledger";
+export {
+  ValidationError,
+  assertPositiveAmount,
+  assertBalanceReturnAllowed,
+} from "./validate";
