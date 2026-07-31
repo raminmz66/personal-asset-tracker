@@ -12,7 +12,7 @@ import {
   verifySession,
 } from "../auth";
 import { requireAuth } from "../middleware/requireAuth";
-import { verifyTotp } from "../totp";
+import { generateSecret, otpauthUri, verifyTotp } from "../totp";
 import {
   afterFailure,
   CLEARED_STATE,
@@ -66,6 +66,10 @@ async function setSetting(
     )
     .bind(key, value)
     .run();
+}
+
+async function deleteSetting(db: D1Database, key: string): Promise<void> {
+  await db.prepare("DELETE FROM settings WHERE key = ?").bind(key).run();
 }
 
 /** Last consumed TOTP step, or -1 when none has been used yet. */
@@ -187,6 +191,7 @@ auth.post("/password", requireAuth, async (c) => {
   const body = await c.req.json<{
     currentPassword?: string;
     newPassword?: string;
+    code?: string;
   }>();
   if (!body.currentPassword || !body.newPassword) {
     return c.json({ error: "invalid_credentials" }, 401);
@@ -197,8 +202,81 @@ auth.post("/password", requireAuth, async (c) => {
     return c.json({ error: "invalid_credentials" }, 401);
   }
 
+  // With 2FA on, a hijacked session plus the current password must not be
+  // enough to take over the login.
+  const totpSecret = await getSetting(c.env.DB, TOTP_SECRET_KEY);
+  if (totpSecret !== null) {
+    if (!body.code) return c.json({ error: "code_required" }, 400);
+    const lastStep = await getLastStep(c.env.DB);
+    const result = await verifyTotp(totpSecret, body.code, Date.now(), lastStep);
+    if (!result.valid) return c.json({ error: "invalid_code" }, 401);
+    await setSetting(c.env.DB, TOTP_LAST_STEP_KEY, String(result.step));
+  }
+
   const passwordHash = await hashPassword(body.newPassword);
   await setPasswordHash(c.env.DB, passwordHash);
+  return c.json({ ok: true });
+});
+
+auth.get("/totp", requireAuth, async (c) => {
+  const secret = await getSetting(c.env.DB, TOTP_SECRET_KEY);
+  return c.json({ enabled: secret !== null });
+});
+
+auth.post("/totp/enroll", requireAuth, async (c) => {
+  if ((await getSetting(c.env.DB, TOTP_SECRET_KEY)) !== null) {
+    // Refuse to silently replace a working authenticator.
+    return c.json({ error: "already_enabled" }, 409);
+  }
+
+  const stored = await getPasswordHash(c.env.DB);
+  if (stored === null) return c.json({ error: "setup_required" }, 401);
+
+  const body = await c.req.json<{ password?: string }>();
+  if (!body.password || !(await verifyPassword(body.password, stored))) {
+    return c.json({ error: "invalid_credentials" }, 401);
+  }
+
+  const secret = generateSecret();
+  await setSetting(c.env.DB, TOTP_PENDING_KEY, secret);
+  return c.json({ secret, otpauthUri: otpauthUri(secret) });
+});
+
+auth.post("/totp/confirm", requireAuth, async (c) => {
+  const pending = await getSetting(c.env.DB, TOTP_PENDING_KEY);
+  if (pending === null) return c.json({ error: "not_pending" }, 409);
+
+  const body = await c.req.json<{ code?: string }>();
+  if (!body.code) return c.json({ error: "code_required" }, 400);
+
+  const result = await verifyTotp(pending, body.code, Date.now(), -1);
+  if (!result.valid) return c.json({ error: "invalid_code" }, 401);
+
+  await setSetting(c.env.DB, TOTP_SECRET_KEY, pending);
+  await setSetting(c.env.DB, TOTP_LAST_STEP_KEY, String(result.step));
+  await deleteSetting(c.env.DB, TOTP_PENDING_KEY);
+  return c.json({ ok: true });
+});
+
+auth.post("/totp/disable", requireAuth, async (c) => {
+  const secret = await getSetting(c.env.DB, TOTP_SECRET_KEY);
+  if (secret === null) return c.json({ error: "not_enabled" }, 409);
+
+  const stored = await getPasswordHash(c.env.DB);
+  if (stored === null) return c.json({ error: "setup_required" }, 401);
+
+  const body = await c.req.json<{ password?: string; code?: string }>();
+  if (!body.password || !(await verifyPassword(body.password, stored))) {
+    return c.json({ error: "invalid_credentials" }, 401);
+  }
+  if (!body.code) return c.json({ error: "code_required" }, 400);
+
+  const lastStep = await getLastStep(c.env.DB);
+  const result = await verifyTotp(secret, body.code, Date.now(), lastStep);
+  if (!result.valid) return c.json({ error: "invalid_code" }, 401);
+
+  await deleteSetting(c.env.DB, TOTP_SECRET_KEY);
+  await deleteSetting(c.env.DB, TOTP_LAST_STEP_KEY);
   return c.json({ ok: true });
 });
 
