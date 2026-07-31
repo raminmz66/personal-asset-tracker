@@ -1,17 +1,17 @@
 {
-  "$schema": "../../node_modules/wrangler/config-schema.json",
-  "name": "personal-asset-tracker-api",
-  "main": "src/index.ts",
-  "compatibility_date": "2026-07-01",
-  // Create D1: wrangler d1 create pat-db — paste database_id below before deploy.
-  // Session signing: wrangler secret put SESSION_SECRET (from apps/api).
-  // Route /api/* on your zone to this Worker (see README).
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "pat-db",
-      "database_id": "local-dev-placeholder",
-      "migrations_dir": "migrations"
-    }
-  ]
+	"$schema": "../../node_modules/wrangler/config-schema.json",
+	"name": "personal-asset-tracker-api",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-07-01",
+	// Create D1: wrangler d1 create pat-db — paste database_id below before deploy.
+	// Session signing: wrangler secret put SESSION_SECRET (from apps/api).
+	// Route /api/* on your zone to this Worker (see README).
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "pat-db",
+			"database_id": "f48c8592-0560-405a-9c01-446fb6d194e0",
+			"migrations_dir": "migrations"
+		}
+	]
 }
