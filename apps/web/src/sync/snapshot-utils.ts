@@ -2,6 +2,7 @@ import {
   balanceQuantity,
   isBalanceActive,
   personShortStatus,
+  type Transaction,
 } from '@pat/domain'
 import type { Snapshot } from './cache'
 
@@ -16,6 +17,43 @@ export type BalanceListItem = {
   id: string
   label: string
   quantity: number
+}
+
+export type BalanceDetailItem = {
+  id: string
+  personId: string
+  personName: string
+  label: string
+  quantity: number
+  transactions: Transaction[]
+}
+
+function sortTransactionsNewestFirst(txs: Transaction[]): Transaction[] {
+  return [...txs].sort((a, b) => {
+    const byDate = b.date.localeCompare(a.date)
+    if (byDate !== 0) return byDate
+    return b.createdAt.localeCompare(a.createdAt)
+  })
+}
+
+export function balanceDetailFromSnapshot(
+  snapshot: Snapshot,
+  balanceId: string,
+): BalanceDetailItem | null {
+  const balance = snapshot.balances.find((b) => b.id === balanceId)
+  if (!balance) return null
+
+  const person = snapshot.people.find((p) => p.id === balance.personId)
+  const txs = snapshot.transactions.filter((t) => t.balanceId === balanceId)
+
+  return {
+    id: balance.id,
+    personId: balance.personId,
+    personName: person?.name ?? '…',
+    label: balance.label,
+    quantity: balanceQuantity(txs),
+    transactions: sortTransactionsNewestFirst(txs),
+  }
 }
 
 export function activeCountForPerson(

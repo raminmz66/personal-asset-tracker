@@ -18,6 +18,32 @@ export function formatGregorianToJalali(isoDate: string): string {
   return dayjs(isoDate).calendar('jalali').format('YYYY/MM/DD')
 }
 
+const JALALI_MONTHS = [
+  'فروردین',
+  'اردیبهشت',
+  'خرداد',
+  'تیر',
+  'مرداد',
+  'شهریور',
+  'مهر',
+  'آبان',
+  'آذر',
+  'دی',
+  'بهمن',
+  'اسفند',
+]
+
+/** Formats a Gregorian ISO date as readable Jalali, e.g. «۱۲ تیر ۱۴۰۴». */
+export function formatJalali(isoDate: string): string {
+  const d = dayjs(isoDate).calendar('jalali')
+  const day = d.date().toLocaleString('fa-IR')
+  const month = JALALI_MONTHS[d.month()]
+  const year = String(d.year()).replace(/\d/g, (digit) =>
+    '۰۱۲۳۴۵۶۷۸۹'[Number(digit)],
+  )
+  return `${day} ${month} ${year}`
+}
+
 /** Parses Jalali YYYY/MM/DD to Gregorian YYYY-MM-DD, or null if invalid. */
 export function parseJalaliToGregorian(jalaliDate: string): string | null {
   const trimmed = jalaliDate.trim()

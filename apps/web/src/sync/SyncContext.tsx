@@ -18,6 +18,16 @@ export type MutateInput = {
   body?: unknown
 }
 
+export class MutateError extends Error {
+  code: string
+
+  constructor(code: string) {
+    super(code)
+    this.name = 'MutateError'
+    this.code = code
+  }
+}
+
 export type SyncContextValue = {
   online: boolean
   pendingCount: number
@@ -100,7 +110,14 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         return
       }
       if (!res.ok) {
-        throw new Error('mutate_failed')
+        let code = 'request_failed'
+        try {
+          const body = (await res.json()) as { error?: string }
+          if (body.error) code = body.error
+        } catch {
+          /* empty body */
+        }
+        throw new MutateError(code)
       }
 
       await refresh()

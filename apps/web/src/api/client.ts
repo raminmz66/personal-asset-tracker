@@ -133,4 +133,51 @@ export const api = {
     delete: (id: string) =>
       apiFetch<{ ok: true }>(`/balances/${id}`, { method: 'DELETE' }),
   },
+
+  transactions: {
+    create: (
+      balanceId: string,
+      body: {
+        type: 'deposit' | 'return'
+        amount: number
+        date: string
+        note?: string | null
+      },
+    ) =>
+      apiFetch<Transaction>(`/balances/${balanceId}/transactions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }),
+
+    update: (
+      id: string,
+      patch: {
+        type?: 'deposit' | 'return'
+        amount?: number
+        date?: string
+        note?: string | null
+      },
+    ) =>
+      apiFetch<Transaction>(`/transactions/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      }),
+
+    delete: (id: string) =>
+      apiFetch<{ ok: true }>(`/transactions/${id}`, { method: 'DELETE' }),
+  },
+}
+
+export const API_ERROR_MESSAGES: Record<string, string> = {
+  over_return: 'برگشت نمی‌تواند از موجودی فعلی بیشتر باشد',
+  invalid_amount: 'مبلغ باید بزرگ‌تر از صفر باشد',
+  invalid_date: 'تاریخ نامعتبر است.',
+  invalid_type: 'نوع تراکنش نامعتبر است.',
+  request_failed: 'خطا در ارتباط با سرور.',
+}
+
+export function apiErrorMessage(code: string): string {
+  return API_ERROR_MESSAGES[code] ?? 'عملیات ناموفق بود.'
 }

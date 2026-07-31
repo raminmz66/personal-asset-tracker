@@ -1,7 +1,7 @@
 import { createBrowserRouter, Outlet, RouterProvider } from 'react-router'
 import { AuthGate } from './auth/AuthGate'
 import { SyncProvider } from './sync/SyncContext'
-import { BalancePage } from './pages/BalancePage'
+import { Balance } from './routes/Balance'
 import { Home } from './routes/Home'
 import { Person } from './routes/Person'
 import { SettledPage } from './pages/SettledPage'
@@ -37,7 +37,7 @@ const router = createBrowserRouter([
           { path: '/', element: <Home /> },
           { path: '/people/:id/settled', element: <SettledPage /> },
           { path: '/people/:id', element: <Person /> },
-          { path: '/balances/:id', element: <BalancePage /> },
+          { path: '/balances/:id', element: <Balance /> },
           { path: '/settings', element: <SettingsPage /> },
         ],
       },

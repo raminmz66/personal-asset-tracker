@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   formatGregorianToJalali,
+  formatJalali,
   parseJalaliToGregorian,
   todayGregorian,
   todayJalali,
@@ -29,6 +30,12 @@ describe('todayJalali', () => {
     const result = todayJalali()
     expect(result).toMatch(/^\d{4}\/\d{2}\/\d{2}$/)
     expect(result).toBe(formatGregorianToJalali(todayGregorian()))
+  })
+})
+
+describe('formatJalali', () => {
+  it('formats a known Gregorian date as readable Jalali', () => {
+    expect(formatJalali('2025-07-31')).toBe('۱۰ مرداد ۱۴۰۴')
   })
 })
 
