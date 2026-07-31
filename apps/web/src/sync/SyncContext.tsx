@@ -33,6 +33,7 @@ export type SyncContextValue = {
   pendingCount: number
   refresh: () => Promise<void>
   mutate: (input: MutateInput) => Promise<void>
+  clearOutbox: () => Promise<void>
 }
 
 const SyncContext = createContext<SyncContextValue | null>(null)
@@ -163,9 +164,14 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const clearOutbox = useCallback(async () => {
+    await setOutbox([])
+    setPendingCount(0)
+  }, [])
+
   const value = useMemo(
-    () => ({ online, pendingCount, refresh, mutate }),
-    [online, pendingCount, refresh, mutate],
+    () => ({ online, pendingCount, refresh, mutate, clearOutbox }),
+    [online, pendingCount, refresh, mutate, clearOutbox],
   )
 
   return <SyncContext.Provider value={value}>{children}</SyncContext.Provider>

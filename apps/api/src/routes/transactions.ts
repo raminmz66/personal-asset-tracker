@@ -182,6 +182,12 @@ transactions.delete("/:id", async (c) => {
     return c.json({ error: "not_found" }, 404);
   }
 
+  const siblings = await fetchTransactionsForBalance(c.env.DB, existing.balance_id);
+  const qtyAfter = quantityExcluding(siblings, id);
+  if (qtyAfter < 0) {
+    return c.json({ error: "invalid_delete" }, 400);
+  }
+
   await enableForeignKeys(c.env.DB);
   await c.env.DB.prepare("DELETE FROM transactions WHERE id = ?").bind(id).run();
   return c.json({ ok: true });

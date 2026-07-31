@@ -10,7 +10,7 @@ const IMPORT_CONFIRM =
 
 export function Settings() {
   const navigate = useNavigate()
-  const { refresh } = useSync()
+  const { refresh, clearOutbox } = useSync()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [currentPassword, setCurrentPassword] = useState('')
@@ -106,6 +106,7 @@ export function Settings() {
         return
       }
 
+      await clearOutbox()
       await refresh()
       setImportSuccess('پشتیبان با موفقیت وارد شد.')
     } catch {

@@ -126,6 +126,13 @@ export function Balance() {
           if (values.type === 'return') {
             assertBalanceReturnAllowed(qty, values.amount)
           }
+        }
+        await mutate({
+          method: 'PATCH',
+          path: `/transactions/${editingTx.id}`,
+          body: values,
+        })
+        if (!online) {
           const now = new Date().toISOString()
           const updated: Transaction = {
             ...editingTx,
@@ -136,12 +143,6 @@ export function Balance() {
             updatedAt: now,
           }
           await applyOfflineTransaction(updated, 'update')
-        } else {
-          await mutate({
-            method: 'PATCH',
-            path: `/transactions/${editingTx.id}`,
-            body: values,
-          })
         }
       } else {
         if (!online) {
@@ -151,6 +152,13 @@ export function Balance() {
           if (values.type === 'return') {
             assertBalanceReturnAllowed(qty, values.amount)
           }
+        }
+        await mutate({
+          method: 'POST',
+          path: `/balances/${id}/transactions`,
+          body: values,
+        })
+        if (!online) {
           const now = new Date().toISOString()
           const tx: Transaction = {
             id: crypto.randomUUID(),
@@ -163,12 +171,6 @@ export function Balance() {
             updatedAt: now,
           }
           await applyOfflineTransaction(tx, 'create')
-        } else {
-          await mutate({
-            method: 'POST',
-            path: `/balances/${id}/transactions`,
-            body: values,
-          })
         }
       }
 
@@ -194,13 +196,12 @@ export function Balance() {
     setError(null)
 
     try {
+      await mutate({
+        method: 'DELETE',
+        path: `/transactions/${tx.id}`,
+      })
       if (!online) {
         await applyOfflineTransaction(tx, 'delete', tx.id)
-      } else {
-        await mutate({
-          method: 'DELETE',
-          path: `/transactions/${tx.id}`,
-        })
       }
       closeForm()
       await loadBalance()
