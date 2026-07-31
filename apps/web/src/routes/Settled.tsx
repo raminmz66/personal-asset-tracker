@@ -64,8 +64,8 @@ export function Settled() {
       <SyncBanner />
 
       <header className="person-bar">
-        <Link to={`/people/${id}`} className="person-back" aria-label="بازگشت">
-          ←
+        <Link to={`/people/${id}`} className="nav-back" aria-label="بازگشت">
+          ›
         </Link>
         <h1 className="person-title">تسویه‌شده‌ها</h1>
         <span aria-hidden="true" />

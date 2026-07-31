@@ -233,10 +233,10 @@ export function Balance() {
       <header className="balance-bar">
         <Link
           to={detail ? `/people/${detail.personId}` : '/'}
-          className="balance-back"
+          className="nav-back"
           aria-label="بازگشت"
         >
-          ←
+          ›
         </Link>
         <h1 className="balance-title">
           {detail ? `${detail.personName} · ${detail.label}` : '…'}

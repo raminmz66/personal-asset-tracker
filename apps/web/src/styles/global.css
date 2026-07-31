@@ -6,18 +6,21 @@
 html {
   direction: rtl;
   font-family: Vazirmatn, Tahoma, sans-serif;
+  height: 100%;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 #root {
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100%;
+  overflow: hidden;
 }
 
 .app-shell {
   max-width: 480px;
   margin: 0 auto;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100%;
+  overflow: hidden;
 }
 
 .page {
@@ -40,16 +43,17 @@ html {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 60vh;
-  min-height: 60dvh;
+  min-height: 100%;
+  box-sizing: border-box;
 }
 
 .auth-page {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 80vh;
-  min-height: 80dvh;
+  min-height: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
   padding-top: 2rem;
   padding-bottom: 2rem;
 }
@@ -132,21 +136,23 @@ html {
   font-size: var(--text-meta);
   text-align: center;
   border-bottom: 1px solid var(--rule);
+  flex-shrink: 0;
 }
 
 .home {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100%;
+  overflow: hidden;
 }
 
 .home-bar {
   display: grid;
-  grid-template-columns: 1.5rem 1fr 1.5rem;
+  grid-template-columns: 2rem 1fr 2rem;
   align-items: center;
   padding: 0.75rem;
   border-bottom: 1px solid var(--rule);
+  flex-shrink: 0;
 }
 
 .home-title {
@@ -167,6 +173,8 @@ html {
 
 .home-body {
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   padding: 0.5rem 0.875rem 1rem;
 }
 
@@ -282,28 +290,32 @@ html {
   text-align: center;
   min-height: 1.9rem;
   box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.nav-back {
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
 }
 
 .person {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100%;
+  overflow: hidden;
 }
 
 .person-bar {
   display: grid;
-  grid-template-columns: 1.5rem 1fr 1.5rem;
+  grid-template-columns: 2rem 1fr 2rem;
   align-items: center;
   padding: 0.75rem;
   border-bottom: 1px solid var(--rule);
-}
-
-.person-back {
-  color: var(--muted);
-  text-decoration: none;
-  font-size: 1.125rem;
-  line-height: 1;
+  flex-shrink: 0;
 }
 
 .person-title {
@@ -316,6 +328,8 @@ html {
 
 .person-body {
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   padding: 0.5rem 0.875rem 1rem;
 }
 
@@ -448,28 +462,23 @@ html {
   text-align: center;
   min-height: 1.9rem;
   box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .balance {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100%;
+  overflow: hidden;
 }
 
 .balance-bar {
   display: grid;
-  grid-template-columns: 1.5rem 1fr 1.5rem;
+  grid-template-columns: 2rem 1fr 2rem;
   align-items: center;
   padding: 0.75rem;
   border-bottom: 1px solid var(--rule);
-}
-
-.balance-back {
-  color: var(--muted);
-  text-decoration: none;
-  font-size: 1.125rem;
-  line-height: 1;
+  flex-shrink: 0;
 }
 
 .balance-title {
@@ -482,6 +491,8 @@ html {
 
 .balance-body {
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   padding: 0.75rem 0.875rem 1rem;
 }
 
@@ -619,6 +630,7 @@ html {
   text-align: center;
   min-height: 1.9rem;
   box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .jalali-date {
@@ -809,23 +821,17 @@ button.jalali-date-field {
 .settings {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100%;
+  overflow: hidden;
 }
 
 .settings-bar {
   display: grid;
-  grid-template-columns: 1.5rem 1fr 1.5rem;
+  grid-template-columns: 2rem 1fr 2rem;
   align-items: center;
   padding: 0.75rem;
   border-bottom: 1px solid var(--rule);
-}
-
-.settings-back {
-  color: var(--muted);
-  text-decoration: none;
-  font-size: 1.125rem;
-  line-height: 1;
+  flex-shrink: 0;
 }
 
 .settings-title {
@@ -838,6 +844,8 @@ button.jalali-date-field {
 
 .settings-body {
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   padding: 0.75rem 0.875rem 1rem;
 }
 
@@ -967,4 +975,5 @@ button.jalali-date-field {
   text-align: center;
   min-height: 1.9rem;
   box-sizing: border-box;
+  flex-shrink: 0;
 }

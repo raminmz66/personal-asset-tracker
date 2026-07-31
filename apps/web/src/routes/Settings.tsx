@@ -130,8 +130,8 @@ export function Settings() {
       <SyncBanner />
 
       <header className="settings-bar">
-        <Link to="/" className="settings-back" aria-label="بازگشت">
-          ←
+        <Link to="/" className="nav-back" aria-label="بازگشت">
+          ›
         </Link>
         <h1 className="settings-title">تنظیمات</h1>
         <span aria-hidden="true" />

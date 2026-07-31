@@ -142,8 +142,8 @@ export function Person() {
       <SyncBanner />
 
       <header className="person-bar">
-        <Link to="/" className="person-back" aria-label="بازگشت">
-          ←
+        <Link to="/" className="nav-back" aria-label="بازگشت">
+          ›
         </Link>
         <h1 className="person-title">{name ?? '…'}</h1>
         <span aria-hidden="true" />
