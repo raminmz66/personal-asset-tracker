@@ -6,16 +6,26 @@
 
 **Architecture:** Shared pure domain package (ledger math, validation, export schema) tested with Vitest. Hono Worker API owns auth + D1 CRUD. React/Vite PWA is answer-first drill-down UI with IndexedDB snapshot cache and ordered offline write queue (last-write-wins).
 
-**Tech Stack:** TypeScript, npm workspaces, Vitest, Hono, Cloudflare Workers + D1 + Pages, Wrangler, React 19, React Router 7, Vite, `vite-plugin-pwa`, `idb`, Web Crypto (PBKDF2 + HMAC session), Vazirmatn (font decision at Task 11), Jalali UI dates via `react-multi-date-picker` + `dayjs` (or equivalent) with Gregorian `YYYY-MM-DD` at the API boundary. **No third-party visual design system** — custom components on CSS tokens.
+**Tech Stack:** TypeScript, npm workspaces, Vitest, Hono, Cloudflare Workers + D1 + Pages, Wrangler (`wrangler.jsonc`), React 19, React Router 7, Vite, `vite-plugin-pwa`, `idb`, Web Crypto (PBKDF2 + HMAC session), Vazirmatn, Jalali UI dates via `react-multi-date-picker` + `dayjs` (or equivalent) with Gregorian `YYYY-MM-DD` at the API boundary. **No third-party visual design system** — custom components on CSS tokens.
+
+## Agent skills to load while implementing
+
+- `wrangler`, `workers-best-practices`, `hono` — API / D1 / deploy
+- `vite`, `vitest`, `vercel-react-best-practices` — web app + tests
+- `web-perf`, `webapp-testing` — PWA polish + smoke
+- Superpowers: `test-driven-development`, `subagent-driven-development` or `executing-plans`
 
 ## Global Constraints
 
 - Single user only; password/PIN auth; no OAuth
-- Persian UI only, `dir="rtl"`
-- Cloudflare free tier
+- Session cookie TTL **~30 days**
+- Persian UI only, `dir="rtl"`; Vazirmatn default
+- Cloudflare free tier; prefer **`wrangler.jsonc`** (not TOML)
+- Enable D1 foreign keys so `ON DELETE CASCADE` works
 - No `adjust` transactions; edit/delete mistakes
 - Permanent delete only; cascade person→assets→transactions
 - Return cannot exceed current balance; illegal item transitions rejected
+- **Create balance** = asset + initial deposit; **create item** = asset + initial received
 - Export/import versioned JSON; import is replace-all or reject entirely
 - Calm notebook tokens: page `#F4EFE6`, ink `#3D3428`, muted `#6A5F50`, rule `#CBBFAD`, accent `#0F6B6B`, danger `#8B3A2F`
 - No activity feed, no home FAB, no notifications
@@ -43,18 +53,19 @@ packages/domain/
 apps/api/
   package.json
   tsconfig.json
-  wrangler.toml
+  wrangler.jsonc                      # prefer JSONC per Cloudflare skills (not .toml)
   migrations/0001_init.sql
   src/index.ts                        # Hono app entry
-  src/env.ts                          # Env bindings types
-  src/db.ts                           # D1 helpers
+  src/env.ts                          # Bindings: DB, SESSION_SECRET
+  src/db.ts                           # D1 helpers; ensure foreign_keys ON
   src/auth.ts                         # password + session cookie
   src/routes/auth.ts
   src/routes/people.ts
   src/routes/assets.ts
   src/routes/transactions.ts
   src/routes/backup.ts
-  tests/*.test.ts                     # domain-facing route tests where feasible
+  tests/*.test.ts
+  .dev.vars.example
 apps/web/
   package.json
   vite.config.ts
@@ -540,12 +551,15 @@ git commit -m "feat(domain): person short status labels"
 ### Task 6: API app + D1 schema
 
 **Files:**
-- Create: `apps/api/package.json`, `apps/api/tsconfig.json`, `apps/api/wrangler.toml`, `apps/api/migrations/0001_init.sql`, `apps/api/src/env.ts`, `apps/api/src/index.ts`, `apps/api/src/db.ts`
+- Create: `apps/api/package.json`, `apps/api/tsconfig.json`, `apps/api/wrangler.jsonc`, `apps/api/migrations/0001_init.sql`, `apps/api/src/env.ts`, `apps/api/src/index.ts`, `apps/api/src/db.ts`, `apps/api/.dev.vars.example`
 
 **Interfaces:**
 - Produces: Hono app mounted at `/api`, D1 binding `DB`, tables `settings`, `people`, `assets`, `transactions`
+- `type Bindings = { DB: D1Database; SESSION_SECRET: string }`
+- `new Hono<{ Bindings: Bindings }>()`
+- `db.ts` runs `PRAGMA foreign_keys = ON` on the connection used for writes (or document D1 default + verify cascades)
 
-- [ ] **Step 1: Add `apps/api` with Hono + wrangler deps** (`hono`, `wrangler`, `@cloudflare/workers-types`, workspace dep on `@pat/domain`)
+- [ ] **Step 1: Add `apps/api` with Hono + wrangler deps** (`hono`, `wrangler@latest`, `@cloudflare/workers-types`, workspace dep on `@pat/domain`)
 
 - [ ] **Step 2: Write migration**
 
@@ -589,29 +603,38 @@ CREATE INDEX idx_assets_person ON assets(person_id);
 CREATE INDEX idx_tx_asset ON transactions(asset_id);
 ```
 
-- [ ] **Step 3: Minimal Worker**
+- [ ] **Step 3: Minimal Worker + wrangler.jsonc**
 
 ```ts
 // apps/api/src/index.ts
 import { Hono } from "hono";
-import type { Env } from "./env";
 
-const app = new Hono<{ Bindings: Env }>();
+export type Bindings = {
+  DB: D1Database;
+  SESSION_SECRET: string;
+};
+
+const app = new Hono<{ Bindings: Bindings }>();
 app.get("/api/health", (c) => c.json({ ok: true }));
 export default app;
 ```
 
-```toml
-# apps/api/wrangler.toml
-name = "personal-asset-tracker-api"
-main = "src/index.ts"
-compatibility_date = "2026-07-01"
-
-[[d1_databases]]
-binding = "DB"
-database_name = "pat-db"
-database_id = "local-dev-placeholder"
-migrations_dir = "migrations"
+```jsonc
+// apps/api/wrangler.jsonc
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "personal-asset-tracker-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-01",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "pat-db",
+      "database_id": "local-dev-placeholder",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
 ```
 
 - [ ] **Step 4: Local migrate + health check**
@@ -620,9 +643,11 @@ Run:
 ```bash
 npm install
 cd apps/api && npx wrangler d1 migrations apply pat-db --local
+npx wrangler types
 npx wrangler dev
 ```
-Expected: `GET /api/health` → `{ ok: true }`
+Expected: `GET /api/health` → `{ ok: true }`  
+Optional: `npx hono request src/index.ts -P /api/health` (no D1 bindings — use wrangler/`workers-fetch` when bindings required)
 
 - [ ] **Step 5: Commit**
 
@@ -636,8 +661,8 @@ git commit -m "feat(api): scaffold Hono worker and D1 schema"
 ### Task 7: Auth (setup, login, session, logout)
 
 **Files:**
-- Create: `apps/api/src/auth.ts`, `apps/api/src/routes/auth.ts`, `apps/api/tests/auth.test.ts` (unit-test pure helpers with vitest; hash/verify with Web Crypto in worker-compatible tests or extracted pure functions)
-- Modify: `apps/api/src/index.ts`, `apps/api/wrangler.toml` (vars: none; secrets: `SESSION_SECRET` via `.dev.vars`)
+- Create: `apps/api/src/auth.ts`, `apps/api/src/routes/auth.ts`, `apps/api/tests/auth.test.ts` (unit-test pure helpers with vitest)
+- Modify: `apps/api/src/index.ts`, `apps/api/.dev.vars.example` (`SESSION_SECRET=dev-secret-change-me`)
 
 **Interfaces:**
 - Produces routes:
@@ -646,8 +671,9 @@ git commit -m "feat(api): scaffold Hono worker and D1 schema"
   - `POST /api/auth/login` body `{ password: string }` → Set-Cookie `session`
   - `POST /api/auth/logout`
   - `POST /api/auth/password` body `{ currentPassword, newPassword }` (authed)
-- Session: HTTP-only `Secure` `SameSite=Lax` cookie, HMAC-signed payload `{ exp }`, TTL 30 days
+- Session: HTTP-only `Secure` `SameSite=Lax` cookie, HMAC-signed payload `{ exp }`, **TTL 30 days**
 - Password: PBKDF2-SHA256, random salt, store in `settings` key `password_hash`
+- Local Vite proxy is same-site enough for Lax; production: serve API under same Pages host or configure accordingly
 
 - [ ] **Step 1: Implement `hashPassword` / `verifyPassword` / `signSession` / `verifySession` in `auth.ts` with vitest coverage for verify true/false and expired session**
 
@@ -697,7 +723,9 @@ git commit -m "feat(api): people CRUD with active asset counts"
 - Modify: `apps/api/src/index.ts`
 
 **Interfaces:**
-- `POST /api/people/:personId/assets` `{ kind: "balance", label } | { kind: "item", name }`
+- `POST /api/people/:personId/assets`
+  - Balance: `{ kind: "balance", label: string, amount: number, date: string, note?: string }` → asset + initial `deposit` in one transaction batch
+  - Item: `{ kind: "item", name: string, date: string, note?: string }` → asset + initial `received`
 - `GET /api/people/:personId/assets?filter=active|settled|all`
 - `GET /api/assets/:id` → asset + computed state + transactions
 - `DELETE /api/assets/:id`
@@ -706,14 +734,14 @@ git commit -m "feat(api): people CRUD with active asset counts"
 - `DELETE /api/transactions/:id`
 - Server recomputes qty/status via `@pat/domain` before accepting returns/transitions
 
-- [ ] **Step 1: Implement create balance + deposit; assert GET shows quantity**
+- [ ] **Step 1: Implement create balance with initial deposit; GET active shows quantity > 0**
 - [ ] **Step 2: Attempt over-return → 400 `over_return`**
-- [ ] **Step 3: Item received/returned happy path + illegal transition → 400**
+- [ ] **Step 3: Create item with initial received; returned happy path + illegal transition → 400**
 - [ ] **Step 4: Commit**
 
 ```bash
 git add apps/api
-git commit -m "feat(api): assets and transactions with domain validation"
+git commit -m "feat(api): assets with initial tx and transaction validation"
 ```
 
 ---
@@ -749,7 +777,7 @@ git commit -m "feat(api): JSON export and replace-all import"
 - Produces: RTL root layout, CSS variables for notebook tokens, React Router routes placeholders
 
 - [ ] **Step 1: Scaffold Vite React TS in `apps/web`; add `react-router`**
-- [ ] **Step 2: Font decision — install `vazirmatn` (or `@fontsource/vazirmatn`) unless user objected; set `html { dir: rtl; font-family: Vazirmatn, Tahoma, sans-serif; }`**
+- [ ] **Step 2: Font — install Vazirmatn (`@fontsource/vazirmatn` or equivalent); set `html { dir: rtl; font-family: Vazirmatn, Tahoma, sans-serif; }`**
 - [ ] **Step 3: Add tokens**
 
 ```css
@@ -860,7 +888,7 @@ git commit -m "feat(web): answer-first home people list"
 - Link to settled
 
 - [ ] **Step 1: Implement layout + navigation to asset**
-- [ ] **Step 2: Add balance (label) and item (name) forms — minimal fields**
+- [ ] **Step 2: Add balance form (label + amount + Jalali date) and item form (name + Jalali date) — posts create-with-initial-tx API**
 - [ ] **Step 3: Manual create + appear in section**
 - [ ] **Step 4: Commit**
 
@@ -930,7 +958,7 @@ git commit -m "feat(web): settings password and backup import/export"
 ### Task 19: PWA + Pages deploy wiring
 
 **Files:**
-- Modify: `apps/web/vite.config.ts` (`vite-plugin-pwa`), `apps/api/wrangler.toml`, root README deploy section
+- Modify: `apps/web/vite.config.ts` (`vite-plugin-pwa`), `apps/api/wrangler.jsonc`, root README deploy section
 - Create: `apps/web/public/icon-192.png` (simple notebook mark — or SVG later)
 
 - [ ] **Step 1: Enable generateSW; app installable on phone**
@@ -972,8 +1000,10 @@ git commit -m "docs: add local smoke checklist for custody tracker"
 | Spec requirement | Task(s) |
 |---|---|
 | PWA + Workers + D1 | 6, 11, 19 |
-| Password/PIN session | 7, 12 |
+| wrangler.jsonc + foreign keys | 6 |
+| Password/PIN session (30d) | 7, 12 |
 | Person / Balance / Item / Tx model | 1–3, 8–9 |
+| Create balance/item with initial tx | 9, 15 |
 | No adjust; edit/delete | 9, 16 |
 | Over-return + item transitions | 3, 9, 16 |
 | Settled hidden + link | 2, 15, 17 |
@@ -981,17 +1011,17 @@ git commit -m "docs: add local smoke checklist for custody tracker"
 | Offline cache + outbox LWW | 13 |
 | Answer-first home, no activity feed | 14 |
 | Person sections + per-section add | 15 |
-| Asset history-first | 16 |
+| Asset history-first + Jalali | 11, 16 |
 | Settings gear | 14, 18 |
 | Calm notebook + teal accent | 11 |
-| Vazirmatn decision point | 11 Step 2 |
+| Vazirmatn | 11 Step 2 |
 | No third-party visual design system | 11, Global Constraints |
-| Jalali UI / Gregorian storage | 11 Step 5, 16 |
-| Domain tests | 2–5 |
+| Domain tests (Vitest) | 2–5 |
 | Cascade delete | 6 migration + 8–9 |
 
 **Placeholder scan:** none intentional.  
-**Type consistency:** `ExportDoc.schemaVersion: 1`, asset `kind: "balance" | "item"`, tx types match specs.
+**Type consistency:** `ExportDoc.schemaVersion: 1`, asset `kind: "balance" | "item"`, create payloads include initial amount/received, tx types match specs.  
+**Skill alignment:** Hono Bindings generics; Wrangler JSONC; Vitest for domain; Vite proxy for local `/api`.
 
 ---
 

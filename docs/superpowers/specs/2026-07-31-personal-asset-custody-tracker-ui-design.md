@@ -5,7 +5,7 @@
 > **Date:** 2026-07-31  
 > **Depends on:** [Architecture & data design](./2026-07-30-personal-asset-custody-tracker-design.md) (Approved)  
 > **Scope:** Information architecture, screens, actions, visual system, states  
-> **Deferred:** Exact font files (see §7), pixel-perfect spacing scale, final microcopy polish
+> **Deferred:** Pixel-perfect spacing scale, final microcopy polish (Vazirmatn is the default font at frontend scaffold)
 
 ---
 
@@ -35,7 +35,7 @@ Usage is rare (~2–3×/month) but must feel immediate and trustworthy. Persian 
 | Navigation approach | **Drill-down ledger**: Home → Person → Asset |
 | Visual personality | Calm notebook |
 | Accent | Deep teal `#0F6B6B` |
-| Fonts | Deferred — candidate **VazirMatn** (decide at frontend start / first UI polish) |
+| Fonts | **Vazirmatn** default at frontend scaffold (swap only if a better Persian UI face is chosen then) |
 | Design system | **No third-party visual kit** — custom Calm notebook components on CSS tokens; optional headless primitives only if needed (e.g. native `<dialog>` / small a11y helper) |
 | Dates | **Jalali (شمسی) in the UI** for display + picking; **Gregorian `YYYY-MM-DD` in API/DB/export** |
 
@@ -76,6 +76,10 @@ No bottom tab bar. No home quick-add. No recent-activity feed in v1.
 - Tap asset → Asset screen
 - Bottom link: **تسویه‌شده‌ها**
 
+**Create forms (aligned with architecture §4.4):**
+- افزودن موجودی: label + **amount** + Jalali date (defaults today) → creates balance + initial deposit
+- افزودن قلم: name + Jalali date (defaults today) → creates item + initial `received`
+
 ### 4.4 Asset
 - Current amount (balance) or status (item) on top
 - Actions: balances → واریز / برگشت; items → received/returned transitions as appropriate
@@ -110,9 +114,7 @@ Avoid: purple gradients, loud pill clusters, multi-layer card shadows, emoji dec
 
 ### 5.2 Typography
 - UI language: Persian only, RTL
-- **Font files not locked.** Default candidate: [VazirMatn](https://github.com/rastikerdar/vazirmatn)
-- **When to decide:** at the start of frontend implementation, or immediately before the first polished UI pass — does **not** block architecture work or the implementation plan
-- Until then: system stack / Tahoma acceptable in wireframes
+- Default face: [Vazirmatn](https://github.com/rastikerdar/vazirmatn) (self-hosted or fontsource at scaffold)
 - Amounts: stronger weight; tabular numbers where feasible
 
 ### 5.3 Shape & density
@@ -179,14 +181,12 @@ Domain rules (balance vs item, deposit/return, settled detection, export/import,
 ## 9. Out of scope for this UI spec
 
 - Frontend framework choice (locked in implementation plan)
-- Final font packaging details beyond Vazirmatn as default candidate
 - Desktop layout refinements beyond “usable”
-- Accessibility audit checklist (follow platform defaults; deepen in implementation if needed)
+- Formal accessibility audit (follow platform defaults; deepen in implementation if needed)
 
 ---
 
 ## 10. Next steps
 
-1. User reviews this UI spec  
-2. Implementation plan (`writing-plans`) covering architecture + UI  
-3. **Font decision** at frontend kickoff (VazirMatn unless a better Persian UI face is chosen then)
+1. Execute [implementation plan](../plans/2026-07-31-personal-asset-custody-tracker.md)  
+2. Install Vazirmatn at web scaffold (Task 11); swap only if needed
