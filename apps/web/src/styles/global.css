@@ -593,6 +593,17 @@ html {
   cursor: pointer;
 }
 
+.confirm-press {
+  font: inherit;
+  cursor: pointer;
+}
+
+.confirm-press--armed {
+  background: var(--danger);
+  color: #f4efe6;
+  border-color: var(--danger);
+}
+
 .balance-cap {
   padding: 0.5rem;
   background: #efe8db;
