@@ -6,7 +6,7 @@ export function SyncBanner() {
   if (online && pendingCount === 0) return null
 
   const message = !online
-    ? 'شما آفلاین هستید.'
+    ? 'آفلاینی — تغییرات اینجا می‌مونه'
     : `${pendingCount.toLocaleString('fa-IR')} تغییر در انتظار همگام‌سازی`
 
   return (

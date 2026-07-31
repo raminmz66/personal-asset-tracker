@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react'
 import { useNavigate } from 'react-router'
-import { getOutbox, setOutbox, setSnapshot, type Snapshot } from './cache'
+import { getOutbox, getSnapshot, setOutbox, setSnapshot, type Snapshot } from './cache'
 import { flushOutbox } from './flush'
 import { enqueue } from './outbox'
 
@@ -31,6 +31,7 @@ export class MutateError extends Error {
 export type SyncContextValue = {
   online: boolean
   pendingCount: number
+  lastSyncedAt: string | null
   refresh: () => Promise<void>
   mutate: (input: MutateInput) => Promise<void>
   clearOutbox: () => Promise<void>
@@ -47,6 +48,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate()
   const [online, setOnline] = useState(() => navigator.onLine)
   const [pendingCount, setPendingCount] = useState(0)
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null)
 
   const forceLogin = useCallback(() => {
     navigate('/login', { replace: true })
@@ -73,12 +75,14 @@ export function SyncProvider({ children }: { children: ReactNode }) {
       'people' | 'balances' | 'transactions'
     >
 
+    const updatedAt = new Date().toISOString()
     await setSnapshot({
       people: doc.people,
       balances: doc.balances,
       transactions: doc.transactions,
-      updatedAt: new Date().toISOString(),
+      updatedAt,
     })
+    setLastSyncedAt(updatedAt)
   }, [forceLogin])
 
   const mutate = useCallback(
@@ -147,6 +151,18 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   }, [syncPendingCount])
 
   useEffect(() => {
+    let cancelled = false
+    void getSnapshot().then((snapshot) => {
+      if (!cancelled && snapshot?.updatedAt) {
+        setLastSyncedAt(snapshot.updatedAt)
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
     if (online) {
       void flush()
     }
@@ -170,8 +186,8 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo(
-    () => ({ online, pendingCount, refresh, mutate, clearOutbox }),
-    [online, pendingCount, refresh, mutate, clearOutbox],
+    () => ({ online, pendingCount, lastSyncedAt, refresh, mutate, clearOutbox }),
+    [online, pendingCount, lastSyncedAt, refresh, mutate, clearOutbox],
   )
 
   return <SyncContext.Provider value={value}>{children}</SyncContext.Provider>
