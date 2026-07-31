@@ -1010,3 +1010,41 @@ button.jalali-date-field {
   cursor: pointer;
   width: 100%;
 }
+
+.totp-enroll {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.totp-enroll__lead {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-status);
+  line-height: 1.5;
+}
+
+.totp-enroll__qr {
+  display: flex;
+  justify-content: center;
+  padding: 0.75rem;
+  background: #faf6ef;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+}
+
+.totp-enroll__secret {
+  margin: 0;
+  text-align: center;
+  font-family: monospace;
+  font-size: var(--text-status);
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  word-break: break-all;
+}
+
+.totp-enroll__actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
