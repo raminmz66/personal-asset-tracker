@@ -14,3 +14,4 @@ export {
   buildExportDoc,
   parseExportDoc,
 } from "./export-schema";
+export { personShortStatus } from "./status";
