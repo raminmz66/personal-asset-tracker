@@ -1,6 +1,7 @@
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { useNavigate } from 'react-router'
 import { api, apiErrorMessage } from '../api/client'
+import { BackButton } from '../components/BackButton'
 import { ConfirmPress } from '../components/ConfirmPress'
 import { SyncBanner } from '../components/SyncBanner'
 import { todayGregorian } from '../dates/jalali'
@@ -130,9 +131,7 @@ export function Settings() {
       <SyncBanner />
 
       <header className="settings-bar">
-        <Link to="/" className="nav-back" aria-label="بازگشت">
-          ›
-        </Link>
+        <BackButton fallbackTo="/" />
         <h1 className="settings-title">تنظیمات</h1>
         <span aria-hidden="true" />
       </header>

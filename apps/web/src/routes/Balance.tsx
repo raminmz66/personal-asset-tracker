@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import type { Transaction } from '@pat/domain'
 import {
   assertBalanceReturnAllowed,
@@ -7,6 +7,7 @@ import {
   ValidationError,
 } from '@pat/domain'
 import { apiErrorMessage } from '../api/client'
+import { BackButton } from '../components/BackButton'
 import { SyncBanner } from '../components/SyncBanner'
 import { ConfirmPress } from '../components/ConfirmPress'
 import {
@@ -231,13 +232,7 @@ export function Balance() {
       <SyncBanner />
 
       <header className="balance-bar">
-        <Link
-          to={detail ? `/people/${detail.personId}` : '/'}
-          className="nav-back"
-          aria-label="بازگشت"
-        >
-          ›
-        </Link>
+        <BackButton fallbackTo={detail ? `/people/${detail.personId}` : '/'} />
         <h1 className="balance-title">
           {detail ? `${detail.personName} · ${detail.label}` : '…'}
         </h1>

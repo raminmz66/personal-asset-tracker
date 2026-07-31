@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { useParams } from 'react-router'
+import { BackButton } from '../components/BackButton'
 import { BalanceRow } from '../components/BalanceRow'
 import { SyncBanner } from '../components/SyncBanner'
 import { getSnapshot } from '../sync/cache'
@@ -64,9 +65,7 @@ export function Settled() {
       <SyncBanner />
 
       <header className="person-bar">
-        <Link to={`/people/${id}`} className="nav-back" aria-label="بازگشت">
-          ›
-        </Link>
+        <BackButton fallbackTo={`/people/${id}`} />
         <h1 className="person-title">تسویه‌شده‌ها</h1>
         <span aria-hidden="true" />
       </header>

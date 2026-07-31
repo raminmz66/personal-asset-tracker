@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router'
 import type { Balance, Transaction } from '@pat/domain'
 import { AmountField } from '../components/AmountField'
+import { BackButton } from '../components/BackButton'
 import { BalanceRow } from '../components/BalanceRow'
 import { SyncBanner } from '../components/SyncBanner'
 import { parseJalaliToGregorian, todayJalali } from '../dates/jalali'
@@ -144,9 +145,7 @@ export function Person() {
       <SyncBanner />
 
       <header className="person-bar">
-        <Link to="/" className="nav-back" aria-label="بازگشت">
-          ›
-        </Link>
+        <BackButton fallbackTo="/" />
         <h1 className="person-title">{name ?? '…'}</h1>
         <span aria-hidden="true" />
       </header>
