@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import type { Balance, Transaction } from '@pat/domain'
 import { AmountField } from '../components/AmountField'
 import { BackButton } from '../components/BackButton'
 import { BalanceRow } from '../components/BalanceRow'
+import { ConfirmPress } from '../components/ConfirmPress'
 import { SyncBanner } from '../components/SyncBanner'
 import { parseJalaliToGregorian, todayJalali } from '../dates/jalali'
 import { parseAmountInput } from '../format/digits'
@@ -12,21 +13,26 @@ import { getSnapshot, setSnapshot } from '../sync/cache'
 import {
   activeBalancesForPerson,
   personFromSnapshot,
+  removePersonFromSnapshot,
+  settledBalancesForPerson,
   type BalanceListItem,
 } from '../sync/snapshot-utils'
 import { useSync } from '../sync/SyncContext'
 
 export function Person() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const { online, refresh, mutate } = useSync()
   const [name, setName] = useState<string | null>(null)
   const [balances, setBalances] = useState<BalanceListItem[]>([])
+  const [settledCount, setSettledCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
   const [label, setLabel] = useState('')
   const [amount, setAmount] = useState('')
   const [jalaliDate, setJalaliDate] = useState(todayJalali)
   const [submitting, setSubmitting] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const loadPerson = useCallback(async () => {
@@ -35,11 +41,13 @@ export function Person() {
     if (!snapshot) {
       setName(null)
       setBalances([])
+      setSettledCount(0)
       return
     }
     const person = personFromSnapshot(snapshot, id)
     setName(person?.name ?? null)
     setBalances(activeBalancesForPerson(snapshot, id))
+    setSettledCount(settledBalancesForPerson(snapshot, id).length)
   }, [id])
 
   useEffect(() => {
@@ -129,6 +137,33 @@ export function Person() {
       setError('افزودن موجودی نشد.')
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  async function handleDeletePerson() {
+    if (!id) return
+    setError(null)
+    setDeleting(true)
+
+    try {
+      await mutate({ method: 'DELETE', path: `/people/${id}` })
+
+      if (!online) {
+        const snapshot = await getSnapshot()
+        if (snapshot) {
+          await setSnapshot({
+            ...removePersonFromSnapshot(snapshot, id),
+            updatedAt: new Date().toISOString(),
+          })
+        }
+      }
+
+      // `replace` keeps the deleted person's URL out of forward history, so
+      // BackButton cannot land on a person that no longer exists.
+      navigate('/', { replace: true })
+    } catch {
+      setError('حذف شخص نشد.')
+      setDeleting(false)
     }
   }
 
@@ -242,6 +277,24 @@ export function Person() {
             <Link to={`/people/${id}/settled`} className="person-settled">
               تسویه‌شده‌ها
             </Link>
+
+            {balances.length > 0 ? (
+              <p className="person-delete-hint">
+                برای حذف، اول موجودی‌ها را تسویه کن
+              </p>
+            ) : (
+              <ConfirmPress
+                label="حذف شخص"
+                confirmLabel={
+                  settledCount > 0
+                    ? `${settledCount.toLocaleString('fa-IR')} موجودی تسویه‌شده حذف شود؟`
+                    : 'مطمئنی؟ دوباره بزن'
+                }
+                onConfirm={handleDeletePerson}
+                disabled={deleting}
+                className="person-delete"
+              />
+            )}
           </>
         )}
       </div>
