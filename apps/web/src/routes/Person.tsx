@@ -4,6 +4,7 @@ import type { Balance, Transaction } from '@pat/domain'
 import { BalanceRow } from '../components/BalanceRow'
 import { SyncBanner } from '../components/SyncBanner'
 import { parseJalaliToGregorian, todayJalali } from '../dates/jalali'
+import { JalaliDateField } from '../components/JalaliDateField'
 import { getSnapshot, setSnapshot } from '../sync/cache'
 import {
   activeBalancesForPerson,
@@ -194,15 +195,10 @@ export function Person() {
                   disabled={submitting}
                   required
                 />
-                <input
-                  className="person-add-input"
-                  type="text"
+                <JalaliDateField
                   value={jalaliDate}
-                  onChange={(e) => setJalaliDate(e.target.value)}
-                  placeholder="۱۴۰۴/۰۵/۱۰"
-                  dir="ltr"
+                  onChange={setJalaliDate}
                   disabled={submitting}
-                  required
                 />
                 <div className="person-add-actions">
                   <button
