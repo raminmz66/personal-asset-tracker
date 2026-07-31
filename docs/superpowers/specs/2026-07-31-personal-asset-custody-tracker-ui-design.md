@@ -1,6 +1,6 @@
 # Personal Asset Custody Tracker — UI/UX Design
 
-> **Status:** Approved (2026-07-31); **amended 2026-07-31** (money-only hard cut)  
+> **Status:** Approved (2026-07-31); **amended 2026-07-31** (money-only hard cut); **amended 2026-08-01** (balance totals — see [balance totals design](./2026-08-01-balance-totals-design.md))  
 > **Depends on:** [Architecture & data design](./2026-07-30-personal-asset-custody-tracker-design.md) (Approved)  
 > **Scope:** IA, screens, actions, visual system, states for **money custody only**  
 > **Out:** Tools, belongings, قلم‌ها, item received/returned flows
@@ -25,7 +25,7 @@ Capture (واریز/برگشت) happens **after** choosing a person. Persian RTL
 | People row | Name + short status (e.g. «۳ موجودی فعال» / «تسویه») |
 | Capture location | Inside person screen only |
 | Person layout | **Single list: موجودی‌ها** (+ افزودن موجودی) |
-| Balance tap | Current amount + **history first**; واریز / برگشت |
+| Balance tap | `مانده` + `کل واریزی` / `کل برگشتی` + **history**; واریز / برگشت |
 | Settled | Hidden by default; «تسویه‌شده‌ها» at bottom of person |
 | Settings | Gear on home header |
 | Navigation | Drill-down: Home → Person → Balance |
@@ -65,7 +65,7 @@ Title + ⚙ · people rows · subtle add person · sync banner when needed.
 - **تسویه‌شده‌ها** at bottom
 
 ### 4.4 Balance
-- موجودی فعلی on top
+- مانده on top, with کل واریزی / کل برگشتی beneath it
 - واریز / برگشت
 - تاریخچه (Jalali dates); tap row → edit
 - Delete with one confirm
@@ -105,7 +105,9 @@ Dates: Jalali display/picker; Gregorian at API boundary.
 
 ## 7. Copy principles
 
-Preferred: موجودی فعلی، واریز، برگشت، موجودی، تسویه، تسویه‌شده‌ها، افزودن موجودی  
+Preferred: مانده، کل واریزی، کل برگشتی، واریز، برگشت، موجودی، تسویه، تسویه‌شده‌ها، افزودن موجودی  
+
+`موجودی` names the balance **object** (موجودی‌ها، افزودن موجودی); `مانده` names its current **number**. Do not use `موجودی فعلی` — retired 2026-08-01.
 
 **Do not use** for v1: نزد من (item sense), افزودن قلم، قلم‌ها، دریافت قلم.
 

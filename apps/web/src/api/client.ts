@@ -224,7 +224,7 @@ export const api = {
 }
 
 export const API_ERROR_MESSAGES: Record<string, string> = {
-  over_return: 'برگشت نمی‌تونه از موجودی فعلی بیشتر باشه',
+  over_return: 'برگشت نمی‌تونه از مانده بیشتر باشه',
   invalid_amount: 'مبلغ باید بزرگ‌تر از صفر باشه',
   invalid_date: 'تاریخ درست نیست.',
   invalid_type: 'نوع تراکنش درست نیست.',

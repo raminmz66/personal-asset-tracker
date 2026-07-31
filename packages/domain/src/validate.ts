@@ -20,7 +20,7 @@ export function assertBalanceReturnAllowed(
   if (returnAmount > currentQty) {
     throw new ValidationError(
       "over_return",
-      "برگشت نمی‌تواند از موجودی فعلی بیشتر باشد",
+      "برگشت نمی‌تواند از مانده بیشتر باشد",
     );
   }
 }
