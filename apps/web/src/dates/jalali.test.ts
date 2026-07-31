@@ -16,7 +16,19 @@ describe('todayGregorian', () => {
   it('returns today as Gregorian YYYY-MM-DD', () => {
     const result = todayGregorian()
     expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/)
-    expect(result).toBe(new Date().toISOString().slice(0, 10))
+
+    // Compare against the LOCAL date. `toISOString()` is UTC, so it
+    // disagreed with `dayjs()` for the whole 00:00–03:30 window in Tehran
+    // (UTC+03:30) — the test failed every night for three and a half hours.
+    // Local is also the correct expectation: "today" for a transaction date
+    // is the user's today.
+    const now = new Date()
+    const local = [
+      String(now.getFullYear()),
+      String(now.getMonth() + 1).padStart(2, '0'),
+      String(now.getDate()).padStart(2, '0'),
+    ].join('-')
+    expect(result).toBe(local)
   })
 })
 
