@@ -6,6 +6,7 @@ import {
   shiftJalaliMonth,
   todayJalali,
 } from '../dates/jalali'
+import { toFaDigits } from '../format/digits'
 
 type JalaliDateFieldProps = {
   value: string
@@ -83,7 +84,8 @@ export function JalaliDateField({
         aria-expanded={open}
         onClick={toggle}
       >
-        <span>{value}</span>
+        {/* Displayed in Persian digits; `value` stays Latin for parsing. */}
+        <span>{toFaDigits(value)}</span>
         <span aria-hidden="true">▾</span>
       </button>
 
@@ -129,7 +131,7 @@ export function JalaliDateField({
                     .join(' ')}
                   onClick={() => pick(cell.jalali)}
                 >
-                  {cell.day}
+                  {toFaDigits(cell.day)}
                 </button>
               )
             })}
