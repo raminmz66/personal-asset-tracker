@@ -28,6 +28,9 @@ if [[ ! -f apps/api/.dev.vars ]]; then
   echo "Created apps/api/.dev.vars from example"
 fi
 
+echo "Applying local D1 migrations …"
+(cd apps/api && npx wrangler d1 migrations apply pat-db --local) >/dev/null
+
 # Free ports left by a previous (or aborted) session
 free_port() {
   local port=$1
