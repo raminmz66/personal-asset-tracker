@@ -128,3 +128,24 @@ export function peopleFromSnapshot(snapshot: Snapshot): PersonListItem[] {
       }
     })
 }
+
+/**
+ * Prunes a person and everything beneath them from a cached snapshot,
+ * mirroring the server's `ON DELETE CASCADE` from people → balances →
+ * transactions. Returns new arrays; the input is not mutated.
+ */
+export function removePersonFromSnapshot(
+  snapshot: Snapshot,
+  personId: string,
+): Pick<Snapshot, 'people' | 'balances' | 'transactions'> {
+  const removedBalanceIds = new Set(
+    snapshot.balances.filter((b) => b.personId === personId).map((b) => b.id),
+  )
+  return {
+    people: snapshot.people.filter((p) => p.id !== personId),
+    balances: snapshot.balances.filter((b) => b.personId !== personId),
+    transactions: snapshot.transactions.filter(
+      (t) => !removedBalanceIds.has(t.balanceId),
+    ),
+  }
+}
