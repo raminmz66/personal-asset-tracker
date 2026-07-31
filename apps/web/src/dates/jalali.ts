@@ -1,5 +1,6 @@
 import dayjs from 'dayjs'
 import jalaliday from 'jalaliday'
+import { toFaDigits } from '../format/digits'
 
 dayjs.extend(jalaliday)
 
@@ -32,10 +33,6 @@ const JALALI_MONTHS = [
   'بهمن',
   'اسفند',
 ]
-
-function toFaDigits(n: number | string): string {
-  return String(n).replace(/\d/g, (digit) => '۰۱۲۳۴۵۶۷۸۹'[Number(digit)]!)
-}
 
 /** Formats a Gregorian ISO date as readable Jalali, e.g. «۱۲ تیر ۱۴۰۴». */
 export function formatJalali(isoDate: string): string {
