@@ -3,6 +3,8 @@ export {
   balanceQuantity,
   isBalanceSettled,
   isBalanceActive,
+  totalDeposited,
+  totalReturned,
 } from "./ledger";
 export {
   ValidationError,
