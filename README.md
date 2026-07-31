@@ -6,7 +6,7 @@ This is **not** accounting software, and **not** a tool/inventory tracker. v1 is
 
 ## Status
 
-Design complete (architecture + UI, money-only). Implementation plan ready.
+Implementation on branch `feat/money-custody-app` (money-only v1). Design + plan docs are the source of truth for product decisions.
 
 ## Docs
 
@@ -100,6 +100,28 @@ Open the Pages URL on a phone → browser “Add to Home Screen”. Manifest nam
 - **Auth:** Password / PIN, ~30-day session cookie
 - **Portability:** JSON export / import (replace-all)
 - **Config:** `wrangler.jsonc`
+
+## Local smoke checklist
+
+Run `npm run dev:api` and `npm run dev:web`, then verify:
+
+- [ ] Setup password (first visit) / login
+- [ ] Add person علی
+- [ ] Add USDT with initial 200 + return 50 → shows 150
+- [ ] Full return USDT → disappears from active; appears under تسویه‌شده‌ها
+- [ ] Export → import replace-all round-trip
+- [ ] Toggle offline in DevTools → SyncBanner; enqueue a write; go online → flush
+
+### Smoke results (2026-07-31)
+
+| Check | Result |
+|---|---|
+| Setup password + login | Pass (API) |
+| Add person علی | Pass (API) |
+| USDT 200 → return 50 → qty 150 | Pass (API) |
+| Full return → active empty, settled lists USDT | Pass (API) |
+| Export → wipe import → restore import | Pass (API) |
+| Offline banner + outbox flush | Pass (outbox unit tests); UI DevTools toggle deferred to device |
 
 ## License
 
