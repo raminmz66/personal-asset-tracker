@@ -85,6 +85,9 @@ export function Home() {
     }
   }
 
+  const totalActive = people.reduce((sum, person) => sum + person.activeCount, 0)
+  const homeCap = `${people.length.toLocaleString('fa-IR')} نفر · ${totalActive.toLocaleString('fa-IR')} موجودی فعال`
+
   return (
     <div className="home">
       <SyncBanner />
@@ -161,7 +164,7 @@ export function Home() {
         )}
       </div>
 
-      <footer className="home-cap">خانه · پول نزد شما از طرف دیگران</footer>
+      <footer className="home-cap">{homeCap}</footer>
     </div>
   )
 }

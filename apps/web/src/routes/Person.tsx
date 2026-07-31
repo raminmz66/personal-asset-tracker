@@ -251,7 +251,9 @@ export function Person() {
         )}
       </div>
 
-      <footer className="person-cap">بدون قلم / ابزار — فقط پول</footer>
+      <footer className="person-cap">
+        {`${balances.length.toLocaleString('fa-IR')} موجودی فعال`}
+      </footer>
     </div>
   )
 }

@@ -13,6 +13,7 @@ import {
   type TransactionFormValues,
 } from '../components/TransactionForm'
 import { formatJalali } from '../dates/jalali'
+import { formatRelativeFa } from '../dates/relative-fa'
 import { getSnapshot, setSnapshot } from '../sync/cache'
 import {
   balanceDetailFromSnapshot,
@@ -28,7 +29,7 @@ function formatAmount(value: number): string {
 
 export function Balance() {
   const { id } = useParams<{ id: string }>()
-  const { online, refresh, mutate } = useSync()
+  const { online, pendingCount, lastSyncedAt, refresh, mutate } = useSync()
   const [detail, setDetail] = useState<BalanceDetailItem | null>(null)
   const [loading, setLoading] = useState(true)
   const [formMode, setFormMode] = useState<FormMode>(null)
@@ -220,6 +221,12 @@ export function Balance() {
     )
   }
 
+  const bannerVisible = !online || pendingCount > 0
+  const balanceCap =
+    bannerVisible || !lastSyncedAt
+      ? ''
+      : `همگام · ${formatRelativeFa(lastSyncedAt)}`
+
   return (
     <div className="balance">
       <SyncBanner />
@@ -330,7 +337,7 @@ export function Balance() {
         )}
       </div>
 
-      <footer className="balance-cap">فقط واریز / برگشت — بدون قلم</footer>
+      <footer className="balance-cap">{balanceCap}</footer>
     </div>
   )
 }

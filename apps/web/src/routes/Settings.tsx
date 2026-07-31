@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router'
 import { api, apiErrorMessage } from '../api/client'
 import { SyncBanner } from '../components/SyncBanner'
 import { todayGregorian } from '../dates/jalali'
+import { formatRelativeFa } from '../dates/relative-fa'
 import { useSync } from '../sync/SyncContext'
 
 const IMPORT_CONFIRM =
@@ -10,7 +11,7 @@ const IMPORT_CONFIRM =
 
 export function Settings() {
   const navigate = useNavigate()
-  const { refresh, clearOutbox } = useSync()
+  const { online, lastSyncedAt, refresh, clearOutbox } = useSync()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [currentPassword, setCurrentPassword] = useState('')
@@ -121,6 +122,12 @@ export function Settings() {
     await api.logout()
     navigate('/login', { replace: true })
   }
+
+  const settingsCap = !online
+    ? 'ذخیره محلی'
+    : lastSyncedAt
+      ? `همگام · ${formatRelativeFa(lastSyncedAt)}`
+      : 'همگام'
 
   return (
     <div className="settings">
@@ -249,7 +256,7 @@ export function Settings() {
         </section>
       </div>
 
-      <footer className="settings-cap">تنظیمات · پشتیبان و امنیت</footer>
+      <footer className="settings-cap">{settingsCap}</footer>
     </div>
   )
 }
