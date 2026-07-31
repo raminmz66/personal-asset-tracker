@@ -7,18 +7,11 @@ type PersonRowProps = {
   activeCount: number
 }
 
-function formatStatus(activeCount: number): string {
-  if (activeCount > 0) {
-    return `${activeCount.toLocaleString('fa-IR')} موجودی فعال`
-  }
-  return personShortStatus(activeCount)
-}
-
 export function PersonRow({ id, name, activeCount }: PersonRowProps) {
   return (
     <Link to={`/people/${id}`} className="person-row">
       <div className="person-row__name">{name}</div>
-      <div className="person-row__meta">{formatStatus(activeCount)}</div>
+      <div className="person-row__meta">{personShortStatus(activeCount)}</div>
     </Link>
   )
 }

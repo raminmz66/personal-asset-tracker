@@ -3,7 +3,7 @@ import { AuthGate } from './auth/AuthGate'
 import { SyncProvider } from './sync/SyncContext'
 import { BalancePage } from './pages/BalancePage'
 import { Home } from './routes/Home'
-import { PersonPage } from './pages/PersonPage'
+import { Person } from './routes/Person'
 import { SettledPage } from './pages/SettledPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { Login } from './routes/Login'
@@ -36,7 +36,7 @@ const router = createBrowserRouter([
         children: [
           { path: '/', element: <Home /> },
           { path: '/people/:id/settled', element: <SettledPage /> },
-          { path: '/people/:id', element: <PersonPage /> },
+          { path: '/people/:id', element: <Person /> },
           { path: '/balances/:id', element: <BalancePage /> },
           { path: '/settings', element: <SettingsPage /> },
         ],

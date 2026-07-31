@@ -1,4 +1,4 @@
-import type { Person } from '@pat/domain'
+import type { Balance, Person, Transaction } from '@pat/domain'
 
 export type AuthStatus = {
   setupRequired: boolean
@@ -6,6 +6,10 @@ export type AuthStatus = {
 }
 
 export type PersonWithCount = Person & { activeBalanceCount: number }
+
+export type BalanceWithQuantity = Balance & { quantity: number }
+
+export type BalanceDetail = BalanceWithQuantity & { transactions: Transaction[] }
 
 type ApiError = { error: string }
 
@@ -103,5 +107,30 @@ export const api = {
 
     delete: (id: string) =>
       apiFetch<{ ok: true }>(`/people/${id}`, { method: 'DELETE' }),
+  },
+
+  balances: {
+    listForPerson: (
+      personId: string,
+      filter: 'active' | 'settled' | 'all' = 'active',
+    ) =>
+      apiFetch<BalanceWithQuantity[]>(
+        `/people/${personId}/balances?filter=${filter}`,
+      ),
+
+    createWithDeposit: (
+      personId: string,
+      body: { label: string; amount: number; date: string; note?: string | null },
+    ) =>
+      apiFetch<BalanceWithQuantity>(`/people/${personId}/balances`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }),
+
+    get: (id: string) => apiFetch<BalanceDetail>(`/balances/${id}`),
+
+    delete: (id: string) =>
+      apiFetch<{ ok: true }>(`/balances/${id}`, { method: 'DELETE' }),
   },
 }

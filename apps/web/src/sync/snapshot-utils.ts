@@ -12,6 +12,12 @@ export type PersonListItem = {
   status: string
 }
 
+export type BalanceListItem = {
+  id: string
+  label: string
+  quantity: number
+}
+
 export function activeCountForPerson(
   snapshot: Snapshot,
   personId: string,
@@ -23,6 +29,33 @@ export function activeCountForPerson(
     if (isBalanceActive(balanceQuantity(txs))) count++
   }
   return count
+}
+
+export function personFromSnapshot(
+  snapshot: Snapshot,
+  personId: string,
+): { id: string; name: string } | undefined {
+  const person = snapshot.people.find((p) => p.id === personId)
+  if (!person) return undefined
+  return { id: person.id, name: person.name }
+}
+
+export function activeBalancesForPerson(
+  snapshot: Snapshot,
+  personId: string,
+): BalanceListItem[] {
+  const balances = snapshot.balances.filter((b) => b.personId === personId)
+  const items: BalanceListItem[] = []
+
+  for (const balance of balances) {
+    const txs = snapshot.transactions.filter((t) => t.balanceId === balance.id)
+    const quantity = balanceQuantity(txs)
+    if (isBalanceActive(quantity)) {
+      items.push({ id: balance.id, label: balance.label, quantity })
+    }
+  }
+
+  return items.sort((a, b) => a.label.localeCompare(b.label, 'fa'))
 }
 
 export function peopleFromSnapshot(snapshot: Snapshot): PersonListItem[] {
