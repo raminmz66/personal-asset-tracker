@@ -6,23 +6,24 @@ This is **not** accounting or personal finance software. It is a small, fast, si
 
 ## Status
 
-Early design. Architecture and data model are drafted; UI/UX and frontend framework are not locked yet.
+Design complete (architecture + UI). Implementation plan ready.
 
 ## Docs
 
 - [Product requirements (PRD)](docs/PRD.md)
 - [Architecture & data design](docs/superpowers/specs/2026-07-30-personal-asset-custody-tracker-design.md)
+- [UI/UX design](docs/superpowers/specs/2026-07-31-personal-asset-custody-tracker-ui-design.md)
+- [Implementation plan](docs/superpowers/plans/2026-07-31-personal-asset-custody-tracker.md)
 
-## Planned stack (infra)
+## Stack (locked)
 
-- **Client:** Mobile-first PWA (Persian / RTL)
-- **Host / API:** Cloudflare Pages + Workers
-- **Database:** Cloudflare D1 (source of truth)
-- **Offline:** Local cache + write queue
-- **Auth:** Single password / PIN
-- **Portability:** JSON export / import
-
-Frontend framework and styling are deferred until after UI/UX design.
+- **Client:** Mobile-first Persian RTL PWA (React + Vite), Calm notebook UI, Vazirmatn, Jalali dates in UI
+- **API:** Hono on Cloudflare Workers
+- **Database:** Cloudflare D1
+- **Offline:** Local snapshot cache + ordered write queue
+- **Auth:** Password / PIN, ~30-day session cookie
+- **Portability:** JSON export / import (replace-all)
+- **Config:** `wrangler.jsonc` (not TOML)
 
 ## License
 
