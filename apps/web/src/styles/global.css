@@ -1,5 +1,6 @@
 @import '@fontsource/vazirmatn/400.css';
 @import '@fontsource/vazirmatn/700.css';
+@import '@fontsource/lalezar/400.css';
 @import './tokens.css';
 
 html {
@@ -60,7 +61,7 @@ html {
 
 .auth-card h1 {
   margin-bottom: 0.35rem;
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: var(--font-display);
 }
 
 .auth-lead {
@@ -147,8 +148,8 @@ html {
   margin: 0;
   text-align: center;
   font-size: var(--text-title);
-  font-weight: 800;
-  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 400;
+  font-family: var(--font-display);
 }
 
 .home-gear {
@@ -179,8 +180,8 @@ html {
 
 .person-row__name {
   font-size: var(--text-name);
-  font-weight: 700;
-  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 400;
+  font-family: var(--font-display);
 }
 
 .person-row__meta {
@@ -303,8 +304,8 @@ html {
   margin: 0;
   text-align: center;
   font-size: var(--text-title);
-  font-weight: 800;
-  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 400;
+  font-family: var(--font-display);
 }
 
 .person-body {
@@ -468,8 +469,8 @@ html {
   margin: 0;
   text-align: center;
   font-size: var(--text-title);
-  font-weight: 800;
-  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 400;
+  font-family: var(--font-display);
 }
 
 .balance-body {
@@ -699,8 +700,8 @@ html {
   margin: 0;
   text-align: center;
   font-size: var(--text-title);
-  font-weight: 800;
-  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 400;
+  font-family: var(--font-display);
 }
 
 .settings-body {

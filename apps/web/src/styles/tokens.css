@@ -11,6 +11,7 @@
   --text-action: 0.9375rem;
   --text-status: 0.8125rem;
   --text-meta: 0.75rem;
+  --font-display: Lalezar, Vazirmatn, Tahoma, sans-serif;
 }
 body {
   margin: 0;

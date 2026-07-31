@@ -11,6 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@fontsource/lalezar": "^5.3.0",
     "@fontsource/vazirmatn": "^5.2.8",
     "@pat/domain": "^0.0.0",
     "dayjs": "^1.11.13",

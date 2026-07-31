@@ -47,7 +47,7 @@ Rules:
 - On a row, **name > status** in size.
 - On Balance, **amount** is the loudest element.
 - Footers never compete with content.
-- Fonts unchanged: Vazirmatn (+ existing Georgia titles where already used).
+- Fonts: Vazirmatn body; **Lalezar** for titles and person names (replaces Georgia)
 
 ---
 
