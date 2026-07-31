@@ -5,6 +5,7 @@ import {
   todayJalali,
 } from '../dates/jalali'
 import { JalaliDateField } from './JalaliDateField'
+import { SegmentedControl } from './SegmentedControl'
 
 export type TransactionFormValues = {
   type: 'deposit' | 'return'
@@ -79,30 +80,16 @@ export function TransactionForm({
       <div className="tx-form-title">{title}</div>
 
       {mode === 'edit' && (
-        <div className="tx-form-type">
-          <label>
-            <input
-              type="radio"
-              name="tx-type"
-              value="deposit"
-              checked={type === 'deposit'}
-              onChange={() => setType('deposit')}
-              disabled={submitting}
-            />
-            واریز
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="tx-type"
-              value="return"
-              checked={type === 'return'}
-              onChange={() => setType('return')}
-              disabled={submitting}
-            />
-            برگشت
-          </label>
-        </div>
+        <SegmentedControl
+          name="tx-type"
+          value={type}
+          disabled={submitting}
+          onChange={setType}
+          options={[
+            { value: 'deposit', label: 'واریز' },
+            { value: 'return', label: 'برگشت' },
+          ]}
+        />
       )}
 
       <input
