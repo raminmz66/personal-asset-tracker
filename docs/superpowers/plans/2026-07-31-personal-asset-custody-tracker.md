@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ship a Persian RTL PWA on Cloudflare (Pages + Workers + D1) that lets one person answer “what do I hold for X?” in seconds, with offline cache and JSON export/import.
+**Goal:** Ship a Persian RTL PWA on Cloudflare (Pages + Workers + D1) that lets one person answer “how much of X’s money do I still hold?” in seconds, with offline cache and JSON export/import.
 
-**Architecture:** Shared pure domain package (ledger math, validation, export schema) tested with Vitest. Hono Worker API owns auth + D1 CRUD. React/Vite PWA is answer-first drill-down UI with IndexedDB snapshot cache and ordered offline write queue (last-write-wins).
+**Architecture:** Shared pure domain package (balance ledger math, validation, export schema) tested with Vitest. Hono Worker API owns auth + D1 CRUD. React/Vite PWA is answer-first drill-down UI with IndexedDB snapshot cache and ordered offline write queue (last-write-wins).
 
 **Tech Stack:** TypeScript, npm workspaces, Vitest, Hono, Cloudflare Workers + D1 + Pages, Wrangler (`wrangler.jsonc`), React 19, React Router 7, Vite, `vite-plugin-pwa`, `idb`, Web Crypto (PBKDF2 + HMAC session), Vazirmatn, Jalali UI dates via `react-multi-date-picker` + `dayjs` (or equivalent) with Gregorian `YYYY-MM-DD` at the API boundary. **No third-party visual design system** — custom components on CSS tokens.
 
@@ -24,8 +24,9 @@
 - Enable D1 foreign keys so `ON DELETE CASCADE` works
 - No `adjust` transactions; edit/delete mistakes
 - Permanent delete only; cascade person→assets→transactions
-- Return cannot exceed current balance; illegal item transitions rejected
-- **Create balance** = asset + initial deposit; **create item** = asset + initial received
+- Return cannot exceed current balance
+- **Create balance** = balance row + initial deposit (label + amount + date)
+- **Money only** — no tools, belongings, item kinds, or received/returned item txs
 - Export/import versioned JSON; import is replace-all or reject entirely
 - Calm notebook tokens: page `#F4EFE6`, ink `#3D3428`, muted `#6A5F50`, rule `#CBBFAD`, accent `#0F6B6B`, danger `#8B3A2F`
 - No activity feed, no home FAB, no notifications
@@ -43,8 +44,8 @@ tsconfig.base.json
 packages/domain/
   package.json
   tsconfig.json
-  src/types.ts                        # Person, Asset, Transaction, ExportDoc
-  src/ledger.ts                       # balance qty, item status, settled?
+  src/types.ts                        # Person, Balance, Transaction, ExportDoc
+  src/ledger.ts                       # balance qty, settled?
   src/validate.ts                     # mutation validation
   src/export-schema.ts                # build/parse/validate export JSON
   src/status.ts                       # person short status string helpers
@@ -61,7 +62,7 @@ apps/api/
   src/auth.ts                         # password + session cookie
   src/routes/auth.ts
   src/routes/people.ts
-  src/routes/assets.ts
+  src/routes/balances.ts
   src/routes/transactions.ts
   src/routes/backup.ts
   tests/*.test.ts
@@ -83,7 +84,7 @@ apps/web/
   src/routes/Login.tsx
   src/routes/Home.tsx
   src/routes/Person.tsx
-  src/routes/Asset.tsx
+  src/routes/Balance.tsx
   src/routes/Settled.tsx
   src/routes/Settings.tsx
   src/components/*.tsx                # bespoke; no design-system package
@@ -99,7 +100,7 @@ README.md                             # update run/deploy
 - Modify: `README.md` (dev scripts section)
 
 **Interfaces:**
-- Produces: exported types `Person`, `BalanceAsset`, `ItemAsset`, `Asset`, `BalanceTx`, `ItemTx`, `Transaction`, `ExportDoc`
+- Produces: exported types `Person`, `Balance`, `Transaction`, `ExportDoc`
 
 - [ ] **Step 1: Create root workspace**
 
@@ -127,54 +128,30 @@ export type Person = {
   updatedAt: string;
 };
 
-export type BalanceAsset = {
+export type Balance = {
   id: string;
   personId: string;
-  kind: "balance";
-  label: string;
+  label: string; // freeform: تومان، USDT, …
   createdAt: string;
   updatedAt: string;
 };
 
-export type ItemAsset = {
+export type Transaction = {
   id: string;
-  personId: string;
-  kind: "item";
-  name: string;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type Asset = BalanceAsset | ItemAsset;
-
-export type BalanceTx = {
-  id: string;
-  assetId: string;
+  balanceId: string;
   type: "deposit" | "return";
   amount: number;
-  date: string; // YYYY-MM-DD
+  date: string; // YYYY-MM-DD Gregorian
   note: string | null;
   createdAt: string;
   updatedAt: string;
 };
-
-export type ItemTx = {
-  id: string;
-  assetId: string;
-  type: "received" | "returned";
-  date: string;
-  note: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type Transaction = BalanceTx | ItemTx;
 
 export type ExportDoc = {
   schemaVersion: 1;
   exportedAt: string;
   people: Person[];
-  assets: Asset[];
+  balances: Balance[];
   transactions: Transaction[];
 };
 ```
@@ -192,7 +169,7 @@ describe("types", () => {
       schemaVersion: 1,
       exportedAt: "2026-07-31T00:00:00.000Z",
       people: [],
-      assets: [],
+      balances: [],
       transactions: [],
     };
     expect(doc.schemaVersion).toBe(1);
@@ -219,24 +196,26 @@ git commit -m "chore: scaffold workspaces and domain types"
 - Modify: `packages/domain/src/index.ts`
 
 **Interfaces:**
-- Consumes: `BalanceTx`, `ItemTx`, `Asset`
+- Consumes: `Transaction`, `Balance`
 - Produces:
-  - `balanceQuantity(txs: BalanceTx[]): number`
-  - `itemStatus(txs: ItemTx[]): "in_custody" | "returned" | "none"`
-  - `isBalanceSettled(qty: number): boolean`
-  - `isItemSettled(status: "in_custody" | "returned" | "none"): boolean`
-  - `isAssetActive(asset: Asset, txs: Transaction[]): boolean`
+  - `balanceQuantity(txs: Transaction[]): number`
+  - `isBalanceSettled(qty: number): boolean`  // qty === 0
+  - `isBalanceActive(qty: number): boolean`  // qty > 0
 
 - [ ] **Step 1: Write failing tests**
 
 ```ts
 import { describe, it, expect } from "vitest";
-import { balanceQuantity, itemStatus, isAssetActive } from "../src/ledger";
-import type { BalanceTx, ItemTx, BalanceAsset, ItemAsset } from "../src/types";
+import {
+  balanceQuantity,
+  isBalanceSettled,
+  isBalanceActive,
+} from "../src/ledger";
+import type { Transaction } from "../src/types";
 
 const base = {
   id: "t1",
-  assetId: "a1",
+  balanceId: "b1",
   date: "2026-07-01",
   note: null,
   createdAt: "",
@@ -245,7 +224,7 @@ const base = {
 
 describe("balanceQuantity", () => {
   it("sums deposits minus returns", () => {
-    const txs: BalanceTx[] = [
+    const txs: Transaction[] = [
       { ...base, id: "1", type: "deposit", amount: 200 },
       { ...base, id: "2", type: "return", amount: 50 },
       { ...base, id: "3", type: "deposit", amount: 100 },
@@ -258,41 +237,11 @@ describe("balanceQuantity", () => {
   });
 });
 
-describe("itemStatus", () => {
-  it("tracks last transition", () => {
-    const txs: ItemTx[] = [
-      { ...base, id: "1", type: "received" },
-      { ...base, id: "2", type: "returned" },
-    ];
-    expect(itemStatus(txs)).toBe("returned");
-  });
-});
-
-describe("isAssetActive", () => {
-  it("hides zero balance and returned items", () => {
-    const bal: BalanceAsset = {
-      id: "a1",
-      personId: "p1",
-      kind: "balance",
-      label: "USDT",
-      createdAt: "",
-      updatedAt: "",
-    };
-    const item: ItemAsset = {
-      id: "a2",
-      personId: "p1",
-      kind: "item",
-      name: "دریل",
-      createdAt: "",
-      updatedAt: "",
-    };
-    expect(isAssetActive(bal, [])).toBe(false);
-    expect(
-      isAssetActive(item, [{ ...base, id: "1", assetId: "a2", type: "returned" }]),
-    ).toBe(false);
-    expect(
-      isAssetActive(item, [{ ...base, id: "1", assetId: "a2", type: "received" }]),
-    ).toBe(true);
+describe("settled / active", () => {
+  it("treats zero as settled and inactive", () => {
+    expect(isBalanceSettled(0)).toBe(true);
+    expect(isBalanceActive(0)).toBe(false);
+    expect(isBalanceActive(250)).toBe(true);
   });
 });
 ```
@@ -305,9 +254,9 @@ Expected: FAIL module not found / exports missing
 - [ ] **Step 3: Implement `ledger.ts`**
 
 ```ts
-import type { Asset, BalanceTx, ItemTx, Transaction } from "./types";
+import type { Transaction } from "./types";
 
-export function balanceQuantity(txs: BalanceTx[]): number {
+export function balanceQuantity(txs: Transaction[]): number {
   return txs.reduce((q, t) => {
     if (t.type === "deposit") return q + t.amount;
     if (t.type === "return") return q - t.amount;
@@ -315,38 +264,12 @@ export function balanceQuantity(txs: BalanceTx[]): number {
   }, 0);
 }
 
-export function itemStatus(txs: ItemTx[]): "in_custody" | "returned" | "none" {
-  if (txs.length === 0) return "none";
-  const ordered = [...txs].sort((a, b) => {
-    const d = a.date.localeCompare(b.date);
-    if (d !== 0) return d;
-    return a.createdAt.localeCompare(b.createdAt);
-  });
-  const last = ordered[ordered.length - 1];
-  return last.type === "received" ? "in_custody" : "returned";
-}
-
 export function isBalanceSettled(qty: number): boolean {
   return qty === 0;
 }
 
-export function isItemSettled(
-  status: "in_custody" | "returned" | "none",
-): boolean {
-  return status === "returned" || status === "none";
-}
-
-export function isAssetActive(asset: Asset, allTxs: Transaction[]): boolean {
-  if (asset.kind === "balance") {
-    const txs = allTxs.filter(
-      (t): t is BalanceTx => t.assetId === asset.id && "amount" in t,
-    );
-    return !isBalanceSettled(balanceQuantity(txs));
-  }
-  const txs = allTxs.filter(
-    (t): t is ItemTx => t.assetId === asset.id && !("amount" in t),
-  );
-  return itemStatus(txs) === "in_custody";
+export function isBalanceActive(qty: number): boolean {
+  return qty > 0;
 }
 ```
 
@@ -359,7 +282,7 @@ Expected: PASS
 
 ```bash
 git add packages/domain
-git commit -m "feat(domain): add ledger quantity and settled detection"
+git commit -m "feat(domain): add money balance ledger helpers"
 ```
 
 ---
@@ -374,7 +297,6 @@ git commit -m "feat(domain): add ledger quantity and settled detection"
 - Produces:
   - `assertBalanceReturnAllowed(currentQty: number, returnAmount: number): void` (throws `ValidationError`)
   - `assertPositiveAmount(amount: number): void`
-  - `assertItemTransition(current: "in_custody" | "returned" | "none", next: "received" | "returned"): void`
   - `class ValidationError extends Error { code: string }`
 
 - [ ] **Step 1: Write failing tests**
@@ -384,7 +306,6 @@ import { describe, it, expect } from "vitest";
 import {
   assertBalanceReturnAllowed,
   assertPositiveAmount,
-  assertItemTransition,
   ValidationError,
 } from "../src/validate";
 
@@ -399,18 +320,6 @@ describe("validation", () => {
 
   it("allows exact full return", () => {
     expect(() => assertBalanceReturnAllowed(50, 50)).not.toThrow();
-  });
-
-  it("rejects returned when already returned", () => {
-    expect(() => assertItemTransition("returned", "returned")).toThrow(
-      ValidationError,
-    );
-  });
-
-  it("rejects received when already in custody", () => {
-    expect(() => assertItemTransition("in_custody", "received")).toThrow(
-      ValidationError,
-    );
   });
 });
 ```
@@ -449,18 +358,6 @@ export function assertBalanceReturnAllowed(
     );
   }
 }
-
-export function assertItemTransition(
-  current: "in_custody" | "returned" | "none",
-  next: "received" | "returned",
-): void {
-  if (next === "received" && current === "in_custody") {
-    throw new ValidationError("illegal_transition", "این قلم هم‌اکنون نزد شماست");
-  }
-  if (next === "returned" && current !== "in_custody") {
-    throw new ValidationError("illegal_transition", "این قلم برای برگشت در دسترس نیست");
-  }
-}
 ```
 
 - [ ] **Step 4: Run — expect PASS**
@@ -469,7 +366,7 @@ export function assertItemTransition(
 
 ```bash
 git add packages/domain
-git commit -m "feat(domain): add mutation validation rules"
+git commit -m "feat(domain): add deposit/return validation rules"
 ```
 
 ---
@@ -483,7 +380,7 @@ git commit -m "feat(domain): add mutation validation rules"
 **Interfaces:**
 - Produces:
   - `EXPORT_SCHEMA_VERSION = 1`
-  - `buildExportDoc(people, assets, transactions): ExportDoc`
+  - `buildExportDoc(people, balances, transactions): ExportDoc`
   - `parseExportDoc(raw: unknown): ExportDoc` (throws `ValidationError` on bad/unknown version)
 
 - [ ] **Step 1: Write failing tests for valid parse, unknown version, missing arrays**
@@ -501,7 +398,7 @@ describe("export schema", () => {
 
   it("rejects unknown version", () => {
     expect(() =>
-      parseExportDoc({ schemaVersion: 99, people: [], assets: [], transactions: [] }),
+      parseExportDoc({ schemaVersion: 99, people: [], balances: [], transactions: [] }),
     ).toThrow(ValidationError);
   });
 
@@ -534,7 +431,7 @@ git commit -m "feat(domain): versioned export/import document schema"
 
 **Interfaces:**
 - Produces: `personShortStatus(activeCount: number): string`  
-  - `activeCount > 0` → `"${n} دارایی فعال"` (use Persian digits optional later)  
+  - `activeCount > 0` → `"${n} موجودی فعال"`  
   - else → `"تسویه"`
 
 - [ ] **Step 1: Failing tests for active and settled strings**
@@ -554,7 +451,7 @@ git commit -m "feat(domain): person short status labels"
 - Create: `apps/api/package.json`, `apps/api/tsconfig.json`, `apps/api/wrangler.jsonc`, `apps/api/migrations/0001_init.sql`, `apps/api/src/env.ts`, `apps/api/src/index.ts`, `apps/api/src/db.ts`, `apps/api/.dev.vars.example`
 
 **Interfaces:**
-- Produces: Hono app mounted at `/api`, D1 binding `DB`, tables `settings`, `people`, `assets`, `transactions`
+- Produces: Hono app mounted at `/api`, D1 binding `DB`, tables `settings`, `people`, `balances`, `transactions`
 - `type Bindings = { DB: D1Database; SESSION_SECRET: string }`
 - `new Hono<{ Bindings: Bindings }>()`
 - `db.ts` runs `PRAGMA foreign_keys = ON` on the connection used for writes (or document D1 default + verify cascades)
@@ -578,29 +475,27 @@ CREATE TABLE people (
   updated_at TEXT NOT NULL
 );
 
-CREATE TABLE assets (
+CREATE TABLE balances (
   id TEXT PRIMARY KEY,
   person_id TEXT NOT NULL REFERENCES people(id) ON DELETE CASCADE,
-  kind TEXT NOT NULL CHECK (kind IN ('balance', 'item')),
-  label TEXT,
-  name TEXT,
+  label TEXT NOT NULL,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
 
 CREATE TABLE transactions (
   id TEXT PRIMARY KEY,
-  asset_id TEXT NOT NULL REFERENCES assets(id) ON DELETE CASCADE,
-  type TEXT NOT NULL,
-  amount REAL,
+  balance_id TEXT NOT NULL REFERENCES balances(id) ON DELETE CASCADE,
+  type TEXT NOT NULL CHECK (type IN ('deposit', 'return')),
+  amount REAL NOT NULL,
   date TEXT NOT NULL,
   note TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
 
-CREATE INDEX idx_assets_person ON assets(person_id);
-CREATE INDEX idx_tx_asset ON transactions(asset_id);
+CREATE INDEX idx_balances_person ON balances(person_id);
+CREATE INDEX idx_tx_balance ON transactions(balance_id);
 ```
 
 - [ ] **Step 3: Minimal Worker + wrangler.jsonc**
@@ -716,32 +611,30 @@ git commit -m "feat(api): people CRUD with active asset counts"
 
 ---
 
-### Task 9: Assets + transactions API
+### Task 9: Balances + transactions API
 
 **Files:**
-- Create: `apps/api/src/routes/assets.ts`, `apps/api/src/routes/transactions.ts`
+- Create: `apps/api/src/routes/balances.ts`, `apps/api/src/routes/transactions.ts`
 - Modify: `apps/api/src/index.ts`
 
 **Interfaces:**
-- `POST /api/people/:personId/assets`
-  - Balance: `{ kind: "balance", label: string, amount: number, date: string, note?: string }` → asset + initial `deposit` in one transaction batch
-  - Item: `{ kind: "item", name: string, date: string, note?: string }` → asset + initial `received`
-- `GET /api/people/:personId/assets?filter=active|settled|all`
-- `GET /api/assets/:id` → asset + computed state + transactions
-- `DELETE /api/assets/:id`
-- `POST /api/assets/:id/transactions` balance `{ type, amount, date, note? }` or item `{ type, date, note? }`
+- `POST /api/people/:personId/balances` `{ label, amount, date, note? }` → balance + initial `deposit`
+- `GET /api/people/:personId/balances?filter=active|settled|all`
+- `GET /api/balances/:id` → balance + quantity + transactions
+- `DELETE /api/balances/:id`
+- `POST /api/balances/:id/transactions` `{ type: "deposit"|"return", amount, date, note? }`
 - `PATCH /api/transactions/:id`
 - `DELETE /api/transactions/:id`
-- Server recomputes qty/status via `@pat/domain` before accepting returns/transitions
+- Server recomputes quantity via `@pat/domain` before accepting returns
 
 - [ ] **Step 1: Implement create balance with initial deposit; GET active shows quantity > 0**
 - [ ] **Step 2: Attempt over-return → 400 `over_return`**
-- [ ] **Step 3: Create item with initial received; returned happy path + illegal transition → 400**
+- [ ] **Step 3: Deposit + return happy path; settled appears under filter=settled**
 - [ ] **Step 4: Commit**
 
 ```bash
 git add apps/api
-git commit -m "feat(api): assets with initial tx and transaction validation"
+git commit -m "feat(api): balances and deposit/return transactions"
 ```
 
 ---
@@ -796,7 +689,7 @@ body {
 }
 ```
 
-- [ ] **Step 4: Placeholder routes for `/login`, `/`, `/people/:id`, `/assets/:id`, `/people/:id/settled`, `/settings`**
+- [ ] **Step 4: Placeholder routes for `/login`, `/`, `/people/:id`, `/balances/:id`, `/people/:id/settled`, `/settings`**
 - [ ] **Step 5: Add `src/dates/jalali.ts` + Vitest: today → Gregorian `YYYY-MM-DD`; format known Gregorian → expected Jalali string; no visual design-system dependency**
 - [ ] **Step 6: Commit**
 
@@ -879,44 +772,43 @@ git commit -m "feat(web): answer-first home people list"
 ### Task 15: Person screen + add asset flows
 
 **Files:**
-- Create: `apps/web/src/routes/Person.tsx`, `apps/web/src/components/AssetRow.tsx`, add dialogs/forms for new balance/item
+- Create: `apps/web/src/routes/Person.tsx`, `apps/web/src/components/BalanceRow.tsx`, add form for new balance
 - Modify: router
 
 **Interfaces:**
-- Sections موجودی‌ها / قلم‌ها with per-section add
-- Active filter only
+- Single list موجودی‌ها with `+ افزودن موجودی`
+- Active balances only
 - Link to settled
 
-- [ ] **Step 1: Implement layout + navigation to asset**
-- [ ] **Step 2: Add balance form (label + amount + Jalali date) and item form (name + Jalali date) — posts create-with-initial-tx API**
-- [ ] **Step 3: Manual create + appear in section**
+- [ ] **Step 1: Implement layout + navigation to balance**
+- [ ] **Step 2: Add balance form (label + amount + Jalali date) — create-with-initial-deposit API**
+- [ ] **Step 3: Manual create + appear in list**
 - [ ] **Step 4: Commit**
 
 ```bash
 git add apps/web
-git commit -m "feat(web): person screen with balance/item sections"
+git commit -m "feat(web): person screen with money balances list"
 ```
 
 ---
 
-### Task 16: Asset screen + transactions
+### Task 16: Balance screen + transactions
 
 **Files:**
-- Create: `apps/web/src/routes/Asset.tsx`, transaction form components
+- Create: `apps/web/src/routes/Balance.tsx`, transaction form components
 - Modify: router
 
 **Interfaces:**
-- Hero current state; واریز/برگشت or item actions; history list; edit on tap; delete with confirm
+- Hero current amount; واریز / برگشت; history list; edit on tap; delete with confirm
 
-- [ ] **Step 1: Balance deposit/return forms — `JalaliDateField` defaulting to today; submit Gregorian `YYYY-MM-DD` to API; optional note**
+- [ ] **Step 1: Deposit/return forms — `JalaliDateField` defaulting to today; submit Gregorian `YYYY-MM-DD`; optional note**
 - [ ] **Step 2: History rows format dates with `formatJalali`**
 - [ ] **Step 3: Show domain/API error for over-return in one Persian line**
-- [ ] **Step 4: Item received/returned actions (same date field)**
-- [ ] **Step 5: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
 git add apps/web
-git commit -m "feat(web): asset history and Jalali capture actions"
+git commit -m "feat(web): balance history and Jalali deposit/return"
 ```
 
 ---
@@ -926,7 +818,7 @@ git commit -m "feat(web): asset history and Jalali capture actions"
 **Files:**
 - Create: `apps/web/src/routes/Settled.tsx`
 
-- [ ] **Step 1: List settled assets for person; tap → Asset**
+- [ ] **Step 1: List settled balances for person; tap → Balance**
 - [ ] **Step 2: Empty copy if none**
 - [ ] **Step 3: Commit**
 
@@ -981,8 +873,7 @@ git commit -m "chore: PWA manifest and Cloudflare deploy docs"
 - [ ] **Step 1: Run checklist locally**
   - Setup password
   - Add person علی
-  - Add USDT + deposit 200 + return 50 → shows 150
-  - Add دریل received → نزد من
+  - Add USDT with initial 200 + return 50 → shows 150
   - Full return USDT → disappears from active; appears under تسویه‌شده‌ها
   - Export → import replace-all round-trip
   - Toggle offline in DevTools → banner; enqueue return; online flush
@@ -1002,16 +893,16 @@ git commit -m "docs: add local smoke checklist for custody tracker"
 | PWA + Workers + D1 | 6, 11, 19 |
 | wrangler.jsonc + foreign keys | 6 |
 | Password/PIN session (30d) | 7, 12 |
-| Person / Balance / Item / Tx model | 1–3, 8–9 |
-| Create balance/item with initial tx | 9, 15 |
+| Person / Balance / deposit-return Tx model | 1–3, 8–9 |
+| Create balance with initial deposit | 9, 15 |
 | No adjust; edit/delete | 9, 16 |
-| Over-return + item transitions | 3, 9, 16 |
+| Over-return rejection | 3, 9, 16 |
 | Settled hidden + link | 2, 15, 17 |
 | Export/import replace-all | 4, 10, 18 |
 | Offline cache + outbox LWW | 13 |
 | Answer-first home, no activity feed | 14 |
-| Person sections + per-section add | 15 |
-| Asset history-first + Jalali | 11, 16 |
+| Person balances list + add موجودی | 15 |
+| Balance history-first + Jalali | 11, 16 |
 | Settings gear | 14, 18 |
 | Calm notebook + teal accent | 11 |
 | Vazirmatn | 11 Step 2 |
@@ -1020,7 +911,7 @@ git commit -m "docs: add local smoke checklist for custody tracker"
 | Cascade delete | 6 migration + 8–9 |
 
 **Placeholder scan:** none intentional.  
-**Type consistency:** `ExportDoc.schemaVersion: 1`, asset `kind: "balance" | "item"`, create payloads include initial amount/received, tx types match specs.  
+**Type consistency:** `ExportDoc.schemaVersion: 1`, `balances` (not items), create payload includes initial deposit, tx types `deposit`|`return` only.  
 **Skill alignment:** Hono Bindings generics; Wrangler JSONC; Vitest for domain; Vite proxy for local `/api`.
 
 ---

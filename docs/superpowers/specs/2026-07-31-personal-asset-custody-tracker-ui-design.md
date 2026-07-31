@@ -1,43 +1,38 @@
 # Personal Asset Custody Tracker — UI/UX Design
 
-> **Status:** Approved (2026-07-31)  
-
-> **Date:** 2026-07-31  
+> **Status:** Approved (2026-07-31); **amended 2026-07-31** (money-only hard cut)  
 > **Depends on:** [Architecture & data design](./2026-07-30-personal-asset-custody-tracker-design.md) (Approved)  
-> **Scope:** Information architecture, screens, actions, visual system, states  
-> **Deferred:** Pixel-perfect spacing scale, final microcopy polish (Vazirmatn is the default font at frontend scaffold)
+> **Scope:** IA, screens, actions, visual system, states for **money custody only**  
+> **Out:** Tools, belongings, قلم‌ها, item received/returned flows
 
 ---
 
 ## 1. Product UX north star
 
-The app is **answer-first**: when someone asks what you hold for them, open the app → find the person → see current state in seconds.
+**Answer-first:** someone asks how much of their money you still hold → open app → person → balances in seconds.
 
-Capture (ثبت) is secondary and happens **after** choosing a person — not from a home FAB.
-
-Usage is rare (~2–3×/month) but must feel immediate and trustworthy. Persian RTL, mobile-first PWA.
+Capture (واریز/برگشت) happens **after** choosing a person. Persian RTL, mobile-first PWA. Rare use, must feel immediate.
 
 ---
 
-## 2. Locked decisions (from brainstorming)
+## 2. Locked decisions
 
 | Topic | Decision |
 |---|---|
 | Primary job | Answer / lookup first |
-| Home content | People list + offline/unsynced banner when needed; **no** activity feed |
-| People row | Name + short status (e.g. «۳ دارایی فعال» / «تسویه») |
-| Capture location | Inside person screen only (for v1) |
-| Person layout | **موجودی‌ها** section first, then **قلم‌ها** |
-| Add actions | Per section: «+ افزودن موجودی» / «+ افزودن قلم» |
-| Asset tap | Current state + **history first**; deposit/return as controls on that screen |
-| Settled assets | Hidden by default; «تسویه‌شده‌ها» link at bottom of person screen |
-| Settings | Gear icon on home header |
-| Navigation approach | **Drill-down ledger**: Home → Person → Asset |
-| Visual personality | Calm notebook |
-| Accent | Deep teal `#0F6B6B` |
-| Fonts | **Vazirmatn** default at frontend scaffold (swap only if a better Persian UI face is chosen then) |
-| Design system | **No third-party visual kit** — custom Calm notebook components on CSS tokens; optional headless primitives only if needed (e.g. native `<dialog>` / small a11y helper) |
-| Dates | **Jalali (شمسی) in the UI** for display + picking; **Gregorian `YYYY-MM-DD` in API/DB/export** |
+| What we track | **Money balances only** (freeform labels) |
+| Home | People list + short status; offline/unsynced banner when needed; **no** activity feed |
+| People row | Name + short status (e.g. «۳ موجودی فعال» / «تسویه») |
+| Capture location | Inside person screen only |
+| Person layout | **Single list: موجودی‌ها** (+ افزودن موجودی) |
+| Balance tap | Current amount + **history first**; واریز / برگشت |
+| Settled | Hidden by default; «تسویه‌شده‌ها» at bottom of person |
+| Settings | Gear on home header |
+| Navigation | Drill-down: Home → Person → Balance |
+| Visual | Calm notebook; accent `#0F6B6B` |
+| Fonts | Vazirmatn default |
+| Design system | None — custom components on CSS tokens |
+| Dates | Jalali UI; Gregorian `YYYY-MM-DD` storage |
 
 ---
 
@@ -45,148 +40,79 @@ Usage is rare (~2–3×/month) but must feel immediate and trustworthy. Persian 
 
 ```
 Login (password / PIN)
-  → Home (people list, settings gear, sync banner if needed)
-      → Person (balances section, items section, settled link)
-          → Asset (current state + history + deposit/return or item actions)
-          → Settled list (same person; settled assets only)
+  → Home (people, settings gear, sync banner if needed)
+      → Person (موجودی‌ها list, + افزودن موجودی, تسویه‌شده‌ها)
+          → Balance (amount + history + واریز/برگشت)
+          → Settled balances for that person
       → Settings (password, export, import)
 ```
 
-No bottom tab bar. No home quick-add. No recent-activity feed in v1.
+No bottom tabs. No home FAB. No قلم / tools UI.
 
 ---
 
 ## 4. Screens & primary actions
 
 ### 4.1 Login
-- Password/PIN entry only
-- No marketing chrome
+Password/PIN only.
 
 ### 4.2 Home
-- Header: app title + settings gear
-- List of people: name + short status
-- Subtle control to add a person (must not dominate lookup)
-- Banner only when offline or local write queue unsynced
+Title + ⚙ · people rows · subtle add person · sync banner when needed.
 
 ### 4.3 Person
-- Header: person name
-- Section **موجودی‌ها** with `+ افزودن موجودی`
-- Section **قلم‌ها** with `+ افزودن قلم`
-- Active assets only in default view
-- Tap asset → Asset screen
-- Bottom link: **تسویه‌شده‌ها**
+- List of **active** balances (label + current amount)
+- **+ افزودن موجودی** → label + amount + Jalali date (→ balance + initial deposit)
+- **تسویه‌شده‌ها** at bottom
 
-**Create forms (aligned with architecture §4.4):**
-- افزودن موجودی: label + **amount** + Jalali date (defaults today) → creates balance + initial deposit
-- افزودن قلم: name + Jalali date (defaults today) → creates item + initial `received`
-
-### 4.4 Asset
-- Current amount (balance) or status (item) on top
-- Actions: balances → واریز / برگشت; items → received/returned transitions as appropriate
-- History list below; tap transaction → edit
-- Destructive delete (asset or transaction) with one confirmation
+### 4.4 Balance
+- موجودی فعلی on top
+- واریز / برگشت
+- تاریخچه (Jalali dates); tap row → edit
+- Delete with one confirm
 
 ### 4.5 Settled
-- Lists settled balances (qty = 0) and returned items for that person
-- Tap → same Asset screen pattern (history accessible for trust)
+Balances with qty = 0; tap → same balance screen.
 
 ### 4.6 Settings
-- Change password/PIN
-- Export JSON
-- Import JSON (replace-all) with strong confirmation
+Change password · Export JSON · Import replace-all (strong confirm).
 
 ---
 
 ## 5. Visual system — Calm notebook
 
-### 5.1 Color tokens
-
 | Token | Value | Use |
 |---|---|---|
-| Page | `#F4EFE6` | App background |
-| Ink | `#3D3428` | Primary text |
-| Muted | `#6A5F50` | Secondary text, labels |
-| Rule | `#CBBFAD` | Dividers (prefer dashed rules over heavy cards) |
-| Accent | `#0F6B6B` | Links, primary buttons, positive amounts |
-| Danger | `#8B3A2F` | Delete / import-destructive only |
+| Page | `#F4EFE6` | Background |
+| Ink | `#3D3428` | Text |
+| Muted | `#6A5F50` | Secondary |
+| Rule | `#CBBFAD` | Dividers |
+| Accent | `#0F6B6B` | Actions / positive amounts |
+| Danger | `#8B3A2F` | Destructive |
 
-Avoid: purple gradients, loud pill clusters, multi-layer card shadows, emoji decoration.
+Typography: Persian RTL, Vazirmatn. Notebook rules over heavy cards. Light RTL push motion only.
 
-### 5.2 Typography
-- UI language: Persian only, RTL
-- Default face: [Vazirmatn](https://github.com/rastikerdar/vazirmatn) (self-hosted or fontsource at scaffold)
-- Amounts: stronger weight; tabular numbers where feasible
-
-### 5.3 Shape & density
-- Notebook-like: rules and spacing over floating cards
-- Small corner radii on controls (not bubbly)
-- Comfortable tap targets; denser than airy “soft modern”
-
-### 5.4 Motion
-- Simple RTL-aware push navigation
-- Sync banner show/hide
-- No celebratory or decorative motion
-
-### 5.5 Component approach (not a design system library)
-- Build small local components (`PersonRow`, `AssetRow`, `SyncBanner`, forms) styled with tokens
-- Do **not** adopt MUI / Mantine / Chakra / default shadcn theming — their visual language fights the notebook look and adds weight for a single-user app
-- Prefer native elements; add a headless helper only when accessibility requires it (modal focus trap, etc.)
-
-### 5.6 Dates (Jalali)
-- User-facing dates: Persian calendar (display + picker)
-- Persistence: Gregorian ISO date `YYYY-MM-DD` in D1, API, and export JSON
-- Default new transaction date: **today** (Jalali shown, Gregorian stored)
-- History lists show Jalali dates (e.g. ۱۲ تیر ۱۴۰۴)
-- Library choice is an implementation detail in the plan (Jalali picker + conversion); keep Gregorian at the boundary
+Dates: Jalali display/picker; Gregorian at API boundary.
 
 ---
 
 ## 6. States & friction
 
-### Empty
-- No people: one short line + add person
-- Person with no assets: empty sections still show their add actions
-- No transactions: «هنوز تراکنشی ثبت نشده»
-
-### Confirms
-Only for destructive actions:
-- Delete person / asset / transaction
-- Import replace-all  
-
-No confirm on normal deposit/return.
-
-### Sync
-- Silent when healthy
-- Home banner when offline or unsynced
-- No toast spam
+- Empty people / empty balances / empty history: short Persian lines + primary add where relevant  
+- Confirm only: delete person/balance/tx; import replace-all  
+- Sync banner when offline or unsynced — no toast spam  
 
 ---
 
 ## 7. Copy principles
 
-- Short, concrete, ledger tone — not marketing
-- Preferred terms: موجودی فعلی، واریز، برگشت، نزد من، تسویه‌شده، تسویه‌شده‌ها
-- Errors: one line — what failed + what to do
+Preferred: موجودی فعلی، واریز، برگشت، موجودی، تسویه، تسویه‌شده‌ها، افزودن موجودی  
 
-Final microcopy polish happens during implementation.
+**Do not use** for v1: نزد من (item sense), افزودن قلم، قلم‌ها، دریافت قلم.
 
 ---
 
-## 8. Relationship to architecture spec
+## 8. Related
 
-Domain rules (balance vs item, deposit/return, settled detection, export/import, offline queue) remain as defined in the architecture design. This document only specifies **how** those concepts appear and are acted on in the UI.
-
----
-
-## 9. Out of scope for this UI spec
-
-- Frontend framework choice (locked in implementation plan)
-- Desktop layout refinements beyond “usable”
-- Formal accessibility audit (follow platform defaults; deepen in implementation if needed)
-
----
-
-## 10. Next steps
-
-1. Execute [implementation plan](../plans/2026-07-31-personal-asset-custody-tracker.md)  
-2. Install Vazirmatn at web scaffold (Task 11); swap only if needed
+Architecture domain rules (money balances only).  
+Plan: [implementation plan](../plans/2026-07-31-personal-asset-custody-tracker.md).  
+Mockups: [docs/superpowers/mockups/](../mockups/).

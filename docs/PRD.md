@@ -4,6 +4,8 @@
 
 > **Status:** Discovery Complete (v1)
 >
+> **v1 product scope (2026-07-31):** Money custody only (currencies / USDT / etc.). Physical tools and belongings are out of scope.
+>
 > **Purpose:** This document summarizes the product vision, discovered requirements, assumptions, constraints, and design goals before any brainstorming or implementation begins.
 
 ---
@@ -14,13 +16,10 @@ I frequently keep assets that belong to other people.
 
 These assets may include:
 
-* Cash
-* Iranian Toman
+* Cash / Iranian Toman
 * Foreign currencies
 * Cryptocurrency (USDT, etc.)
-* Physical tools
-* Personal belongings
-* Potentially other asset types in the future
+* (v1: money only — not physical tools or belongings)
 
 The goal is **not accounting**.
 
@@ -47,7 +46,6 @@ Typical situations include:
   * "How much USDT do I have with you?"
 * Someone requests part of their money back.
 * I want to know how much has already been returned.
-* I cannot remember whether I lent a specific tool to someone.
 * I know I recorded something somewhere, but I don't remember where.
 
 The product should become the **single source of truth**.
@@ -105,7 +103,6 @@ Examples:
 
 * How much money do you have for me?
 * How much USDT do I still have?
-* Is my tool still with you?
 * How much have you already returned?
 
 ---
@@ -129,17 +126,17 @@ Those products solve different problems.
 
 # 8. Supported Asset Types
 
-Examples include:
+**v1:** Money balances only (freeform labels). Examples:
 
 * Toman
 * USD
 * EUR
 * USDT
 * BTC
-* Physical tools
-* Personal belongings
 
-The design should allow adding new asset types easily.
+Physical tools and personal belongings are **out of scope** for v1.
+
+The design should allow adding new **money** labels easily without a code deploy.
 
 ---
 
@@ -157,7 +154,7 @@ No split ownership.
 
 # 10. Asset Rules
 
-A single person may have multiple assets simultaneously.
+A single person may have multiple **money balances** simultaneously.
 
 Example:
 
@@ -165,9 +162,8 @@ John
 
 * 10,000,000 Toman
 * 250 USDT
-* One Drill
 
-Each asset has its own independent history.
+Each balance has its own independent history.
 
 ---
 
@@ -381,13 +377,13 @@ Each Asset has:
 The application should support:
 
 * Partial returns
-* Multiple assets per person
+* Multiple money balances per person
 * Exact transaction dates
 * Optional notes
 * Editing mistakes
 * Permanent deletion
 * Manual cloud backup
-* Independent histories per asset
+* Independent histories per balance
 
 ---
 
