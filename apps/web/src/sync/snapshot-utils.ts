@@ -3,6 +3,8 @@ import {
   isBalanceActive,
   isBalanceSettled,
   personShortStatus,
+  totalDeposited,
+  totalReturned,
   type Transaction,
 } from '@pat/domain'
 import type { Snapshot } from './cache'
@@ -18,6 +20,8 @@ export type BalanceListItem = {
   id: string
   label: string
   quantity: number
+  /** Everything ever deposited — what a settled row shows instead of ۰. */
+  deposited: number
 }
 
 export type BalanceDetailItem = {
@@ -26,6 +30,8 @@ export type BalanceDetailItem = {
   personName: string
   label: string
   quantity: number
+  deposited: number
+  returned: number
   transactions: Transaction[]
 }
 
@@ -53,21 +59,45 @@ export function balanceDetailFromSnapshot(
     personName: person?.name ?? '…',
     label: balance.label,
     quantity: balanceQuantity(txs),
+    deposited: totalDeposited(txs),
+    returned: totalReturned(txs),
     transactions: sortTransactionsNewestFirst(txs),
   }
+}
+
+/**
+ * Balances for a person whose quantity satisfies `include`, label-sorted.
+ * The active and settled selectors differ only by that predicate.
+ */
+function balanceItemsForPerson(
+  snapshot: Snapshot,
+  personId: string,
+  include: (quantity: number) => boolean,
+): BalanceListItem[] {
+  const balances = snapshot.balances.filter((b) => b.personId === personId)
+  const items: BalanceListItem[] = []
+
+  for (const balance of balances) {
+    const txs = snapshot.transactions.filter((t) => t.balanceId === balance.id)
+    const quantity = balanceQuantity(txs)
+    if (include(quantity)) {
+      items.push({
+        id: balance.id,
+        label: balance.label,
+        quantity,
+        deposited: totalDeposited(txs),
+      })
+    }
+  }
+
+  return items.sort((a, b) => a.label.localeCompare(b.label, 'fa'))
 }
 
 export function activeCountForPerson(
   snapshot: Snapshot,
   personId: string,
 ): number {
-  const balances = snapshot.balances.filter((b) => b.personId === personId)
-  let count = 0
-  for (const balance of balances) {
-    const txs = snapshot.transactions.filter((t) => t.balanceId === balance.id)
-    if (isBalanceActive(balanceQuantity(txs))) count++
-  }
-  return count
+  return activeBalancesForPerson(snapshot, personId).length
 }
 
 export function personFromSnapshot(
@@ -83,36 +113,14 @@ export function activeBalancesForPerson(
   snapshot: Snapshot,
   personId: string,
 ): BalanceListItem[] {
-  const balances = snapshot.balances.filter((b) => b.personId === personId)
-  const items: BalanceListItem[] = []
-
-  for (const balance of balances) {
-    const txs = snapshot.transactions.filter((t) => t.balanceId === balance.id)
-    const quantity = balanceQuantity(txs)
-    if (isBalanceActive(quantity)) {
-      items.push({ id: balance.id, label: balance.label, quantity })
-    }
-  }
-
-  return items.sort((a, b) => a.label.localeCompare(b.label, 'fa'))
+  return balanceItemsForPerson(snapshot, personId, isBalanceActive)
 }
 
 export function settledBalancesForPerson(
   snapshot: Snapshot,
   personId: string,
 ): BalanceListItem[] {
-  const balances = snapshot.balances.filter((b) => b.personId === personId)
-  const items: BalanceListItem[] = []
-
-  for (const balance of balances) {
-    const txs = snapshot.transactions.filter((t) => t.balanceId === balance.id)
-    const quantity = balanceQuantity(txs)
-    if (isBalanceSettled(quantity)) {
-      items.push({ id: balance.id, label: balance.label, quantity })
-    }
-  }
-
-  return items.sort((a, b) => a.label.localeCompare(b.label, 'fa'))
+  return balanceItemsForPerson(snapshot, personId, isBalanceSettled)
 }
 
 export function peopleFromSnapshot(snapshot: Snapshot): PersonListItem[] {
