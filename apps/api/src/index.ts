@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import type { Bindings } from "./env";
 import auth from "./routes/auth";
+import backup from "./routes/backup";
 import balances, { personBalances } from "./routes/balances";
 import people from "./routes/people";
 import transactions from "./routes/transactions";
@@ -13,6 +14,7 @@ people.route("/:personId/balances", personBalances);
 app.route("/api/people", people);
 app.route("/api/balances", balances);
 app.route("/api/transactions", transactions);
+app.route("/api/backup", backup);
 
 export default app;
 export type { Bindings } from "./env";
