@@ -374,6 +374,12 @@ html {
   color: inherit;
 }
 
+/* The list's own trailing separator would double up with the section rule
+   below it (.person-settled / .person-delete both draw a top border). */
+.balance-row:last-child {
+  border-bottom: 0;
+}
+
 .balance-row__label {
   font-size: var(--text-name);
   font-weight: 700;
