@@ -124,7 +124,7 @@ html {
   padding: 0.5rem 0.875rem;
   background: #efe8db;
   color: var(--muted);
-  font-size: 0.75rem;
+  font-size: var(--text-meta);
   text-align: center;
   border-bottom: 1px solid var(--rule);
 }
@@ -146,7 +146,7 @@ html {
 .home-title {
   margin: 0;
   text-align: center;
-  font-size: 1.125rem;
+  font-size: var(--text-title);
   font-weight: 800;
   font-family: Georgia, 'Times New Roman', serif;
 }
@@ -178,13 +178,14 @@ html {
 }
 
 .person-row__name {
+  font-size: var(--text-name);
   font-weight: 700;
   font-family: Georgia, 'Times New Roman', serif;
 }
 
 .person-row__meta {
   margin-top: 0.125rem;
-  font-size: 0.75rem;
+  font-size: var(--text-status);
   color: var(--muted);
 }
 
@@ -206,7 +207,7 @@ html {
   color: var(--accent);
   font: inherit;
   font-weight: 700;
-  font-size: 0.75rem;
+  font-size: var(--text-action);
   text-align: center;
   cursor: pointer;
 }
@@ -271,8 +272,10 @@ html {
   padding: 0.5rem;
   background: #efe8db;
   color: var(--muted);
-  font-size: 0.6875rem;
+  font-size: var(--text-meta);
   text-align: center;
+  min-height: 1.9rem;
+  box-sizing: border-box;
 }
 
 .person {
@@ -299,7 +302,7 @@ html {
 .person-title {
   margin: 0;
   text-align: center;
-  font-size: 1.125rem;
+  font-size: var(--text-title);
   font-weight: 800;
   font-family: Georgia, 'Times New Roman', serif;
 }
@@ -314,7 +317,7 @@ html {
   justify-content: space-between;
   align-items: center;
   margin: 0.5rem 0;
-  font-size: 0.75rem;
+  font-size: var(--text-meta);
   font-weight: 700;
   color: var(--muted);
 }
@@ -342,10 +345,16 @@ html {
   border-bottom: 1px dashed var(--rule);
   text-decoration: none;
   color: inherit;
-  font-size: 0.875rem;
+}
+
+.balance-row__label {
+  font-size: var(--text-name);
+  font-weight: 700;
 }
 
 .balance-row__qty {
+  font-size: var(--text-name);
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
@@ -428,8 +437,10 @@ html {
   padding: 0.5rem;
   background: #efe8db;
   color: var(--muted);
-  font-size: 0.6875rem;
+  font-size: var(--text-meta);
   text-align: center;
+  min-height: 1.9rem;
+  box-sizing: border-box;
 }
 
 .balance {
@@ -456,7 +467,7 @@ html {
 .balance-title {
   margin: 0;
   text-align: center;
-  font-size: 0.875rem;
+  font-size: var(--text-title);
   font-weight: 800;
   font-family: Georgia, 'Times New Roman', serif;
 }
@@ -473,13 +484,13 @@ html {
 }
 
 .balance-hero-label {
-  font-size: 0.75rem;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
 .balance-hero-num {
   margin-top: 0.25rem;
-  font-size: 2.5rem;
+  font-size: var(--text-amount);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
@@ -510,7 +521,7 @@ html {
 
 .balance-sec {
   margin: 0.5rem 0;
-  font-size: 0.75rem;
+  font-size: var(--text-meta);
   font-weight: 700;
   color: var(--muted);
 }
@@ -585,8 +596,10 @@ html {
   padding: 0.5rem;
   background: #efe8db;
   color: var(--muted);
-  font-size: 0.6875rem;
+  font-size: var(--text-meta);
   text-align: center;
+  min-height: 1.9rem;
+  box-sizing: border-box;
 }
 
 .jalali-date-field,
@@ -685,7 +698,7 @@ html {
 .settings-title {
   margin: 0;
   text-align: center;
-  font-size: 1.125rem;
+  font-size: var(--text-title);
   font-weight: 800;
   font-family: Georgia, 'Times New Roman', serif;
 }
@@ -811,6 +824,8 @@ html {
   padding: 0.5rem;
   background: #efe8db;
   color: var(--muted);
-  font-size: 0.6875rem;
+  font-size: var(--text-meta);
   text-align: center;
+  min-height: 1.9rem;
+  box-sizing: border-box;
 }
