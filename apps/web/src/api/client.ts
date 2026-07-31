@@ -192,16 +192,16 @@ export const api = {
 }
 
 export const API_ERROR_MESSAGES: Record<string, string> = {
-  over_return: 'برگشت نمی‌تواند از موجودی فعلی بیشتر باشد',
-  invalid_amount: 'مبلغ باید بزرگ‌تر از صفر باشد',
-  invalid_date: 'تاریخ نامعتبر است.',
-  invalid_type: 'نوع تراکنش نامعتبر است.',
-  invalid_credentials: 'رمز عبور اشتباه است.',
-  invalid_json: 'فایل پشتیبان نامعتبر است.',
-  invalid_export: 'فایل پشتیبان نامعتبر است.',
-  request_failed: 'خطا در ارتباط با سرور.',
+  over_return: 'برگشت نمی‌تونه از موجودی فعلی بیشتر باشه',
+  invalid_amount: 'مبلغ باید بزرگ‌تر از صفر باشه',
+  invalid_date: 'تاریخ درست نیست.',
+  invalid_type: 'نوع تراکنش درست نیست.',
+  invalid_credentials: 'رمز اشتباهه.',
+  invalid_json: 'این فایل پشتیبان به درد نمی‌خوره.',
+  invalid_export: 'این فایل پشتیبان به درد نمی‌خوره.',
+  request_failed: 'ارتباط با سرور برقرار نشد.',
 }
 
 export function apiErrorMessage(code: string): string {
-  return API_ERROR_MESSAGES[code] ?? 'عملیات ناموفق بود.'
+  return API_ERROR_MESSAGES[code] ?? 'انجام نشد.'
 }

@@ -77,7 +77,7 @@ export function Settled() {
         ) : name === null ? (
           <p className="person-muted">شخص یافت نشد.</p>
         ) : balances.length === 0 ? (
-          <p className="person-muted">موجودی تسویه‌شده‌ای نیست.</p>
+          <p className="person-muted">چیزی تو تسویه‌شده‌ها نیست</p>
         ) : (
           <>
             <div className="person-sec">

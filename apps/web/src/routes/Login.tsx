@@ -3,14 +3,14 @@ import { Navigate, useNavigate } from 'react-router'
 import { api } from '../api/client'
 
 const ERROR_MESSAGES: Record<string, string> = {
-  invalid_credentials: 'رمز عبور اشتباه است.',
-  password_required: 'رمز عبور را وارد کنید.',
-  already_setup: 'راه‌اندازی قبلاً انجام شده است.',
-  request_failed: 'خطا در ارتباط با سرور.',
+  invalid_credentials: 'رمز اشتباهه.',
+  password_required: 'رمزتو وارد کن.',
+  already_setup: 'قبلاً راه‌اندازی شده.',
+  request_failed: 'ارتباط با سرور برقرار نشد.',
 }
 
 function errorMessage(code: string) {
-  return ERROR_MESSAGES[code] ?? 'خطایی رخ داد. دوباره تلاش کنید.'
+  return ERROR_MESSAGES[code] ?? 'یه مشکلی پیش اومد. دوباره امتحان کن.'
 }
 
 export function Login() {
@@ -75,8 +75,8 @@ export function Login() {
         <h1>{setupRequired ? 'راه‌اندازی اولیه' : 'ورود'}</h1>
         <p className="auth-lead">
           {setupRequired
-            ? 'برای شروع، یک رمز عبور برای این دستگاه تعیین کنید.'
-            : 'رمز عبور را وارد کنید.'}
+            ? 'برای شروع یه رمز برای این دستگاه بذار.'
+            : 'رمزتو وارد کن.'}
         </p>
 
         <form className="auth-form" onSubmit={handleSubmit}>
@@ -99,7 +99,7 @@ export function Login() {
 
           <button className="auth-submit" type="submit" disabled={submitting}>
             {submitting
-              ? 'لطفاً صبر کنید…'
+              ? 'یه لحظه…'
               : setupRequired
                 ? 'ذخیره و ورود'
                 : 'ورود'}

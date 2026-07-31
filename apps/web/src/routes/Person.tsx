@@ -68,11 +68,11 @@ export function Person() {
     const gregorianDate = parseJalaliToGregorian(jalaliDate)
 
     if (!trimmedLabel || !Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-      setError('برچسب و مبلغ معتبر وارد کنید.')
+      setError('برچسب و مبلغ درست وارد کن.')
       return
     }
     if (!gregorianDate) {
-      setError('تاریخ نامعتبر است.')
+      setError('تاریخ درست نیست.')
       return
     }
 
@@ -122,7 +122,7 @@ export function Person() {
       setJalaliDate(todayJalali())
       setAdding(false)
     } catch {
-      setError('افزودن موجودی ناموفق بود.')
+      setError('افزودن موجودی نشد.')
     } finally {
       setSubmitting(false)
     }
@@ -230,7 +230,7 @@ export function Person() {
                 {error && <p className="person-add-error">{error}</p>}
               </form>
             ) : balances.length === 0 ? (
-              <p className="person-muted">موجودی فعالی نیست.</p>
+              <p className="person-muted">موجودی فعالی نداری</p>
             ) : (
               <div className="person-list">
                 {balances.map((balance) => (

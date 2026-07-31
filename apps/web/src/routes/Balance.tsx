@@ -182,7 +182,7 @@ export function Balance() {
       } else if (err instanceof ValidationError) {
         setError(apiErrorMessage(err.code))
       } else {
-        setError('عملیات ناموفق بود.')
+        setError('انجام نشد.')
       }
     } finally {
       setSubmitting(false)
@@ -206,7 +206,7 @@ export function Balance() {
       closeForm()
       await loadBalance()
     } catch {
-      setError('حذف ناموفق بود.')
+      setError('حذف نشد.')
     } finally {
       setSubmitting(false)
     }

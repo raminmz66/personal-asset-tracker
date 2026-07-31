@@ -79,7 +79,7 @@ export function Home() {
       setNewName('')
       setAdding(false)
     } catch {
-      setError('افزودن شخص ناموفق بود.')
+      setError('افزودن شخص نشد.')
     } finally {
       setSubmitting(false)
     }
@@ -101,7 +101,7 @@ export function Home() {
         {loading ? (
           <p className="home-muted">در حال بارگذاری…</p>
         ) : people.length === 0 ? (
-          <p className="home-empty">هنوز کسی ثبت نشده.</p>
+          <p className="home-empty">هنوز کسی اضافه نکردی</p>
         ) : (
           <div className="home-list">
             {people.map((person) => (

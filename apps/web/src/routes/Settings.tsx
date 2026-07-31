@@ -6,7 +6,7 @@ import { todayGregorian } from '../dates/jalali'
 import { useSync } from '../sync/SyncContext'
 
 const IMPORT_CONFIRM =
-  'همهٔ داده‌های فعلی حذف و با فایل پشتیبان جایگزین می‌شوند.\n\nاین عمل برگشت‌پذیر نیست. ادامه می‌دهید؟'
+  'همهٔ داده‌های فعلی حذف و با فایل پشتیبان جایگزین می‌شن.\n\nاین کار برگشت نداره. ادامه می‌دی؟'
 
 export function Settings() {
   const navigate = useNavigate()
@@ -35,11 +35,11 @@ export function Settings() {
     setPasswordSuccess(null)
 
     if (newPassword !== confirmPassword) {
-      setPasswordError('رمز جدید و تکرار آن یکسان نیست.')
+      setPasswordError('رمز جدید و تکرارش یکی نیست.')
       return
     }
     if (newPassword.length < 1) {
-      setPasswordError('رمز جدید را وارد کنید.')
+      setPasswordError('رمز جدید رو وارد کن.')
       return
     }
 
@@ -55,7 +55,7 @@ export function Settings() {
     setCurrentPassword('')
     setNewPassword('')
     setConfirmPassword('')
-    setPasswordSuccess('رمز عبور با موفقیت تغییر کرد.')
+    setPasswordSuccess('رمز عوض شد.')
   }
 
   async function handleExport() {
@@ -108,9 +108,9 @@ export function Settings() {
 
       await clearOutbox()
       await refresh()
-      setImportSuccess('پشتیبان با موفقیت وارد شد.')
+      setImportSuccess('پشتیبان اومد تو.')
     } catch {
-      setImportError('فایل پشتیبان نامعتبر است.')
+      setImportError('این فایل پشتیبان به درد نمی‌خوره.')
     } finally {
       setImporting(false)
     }
@@ -200,7 +200,7 @@ export function Settings() {
         <section className="settings-section">
           <h2 className="settings-sec-title">پشتیبان‌گیری</h2>
           <p className="settings-lead">
-            خروجی JSON همهٔ اشخاص، موجودی‌ها و تراکنش‌ها.
+            یه فایل JSON از همهٔ اشخاص، موجودی‌ها و تراکنش‌ها.
           </p>
           {exportError && <p className="settings-error">{exportError}</p>}
           <button
@@ -216,7 +216,7 @@ export function Settings() {
         <section className="settings-section">
           <h2 className="settings-sec-title">بازیابی</h2>
           <p className="settings-lead">
-            جایگزینی کامل داده‌ها با فایل پشتیبان.
+            داده‌ها رو کامل با فایل پشتیبان عوض می‌کنه.
           </p>
           <input
             ref={fileInputRef}

@@ -51,11 +51,11 @@ export function TransactionForm({
     const parsedAmount = Number(amount.replace(/,/g, ''))
     const gregorianDate = parseJalaliToGregorian(jalaliDate)
     if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-      setLocalError('مبلغ معتبر وارد کنید.')
+      setLocalError('مبلغ درست وارد کن.')
       return
     }
     if (!gregorianDate) {
-      setLocalError('تاریخ نامعتبر است.')
+      setLocalError('تاریخ درست نیست.')
       return
     }
     setLocalError(null)

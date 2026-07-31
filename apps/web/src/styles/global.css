@@ -365,7 +365,7 @@ html {
   border-top: 1px dashed var(--rule);
   color: var(--accent);
   font-weight: 700;
-  font-size: 0.8125rem;
+  font-size: var(--text-action);
   text-align: center;
   text-decoration: none;
 }
