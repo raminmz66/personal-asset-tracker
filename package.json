@@ -7,6 +7,7 @@
     "dev:web": "npm run dev -w @pat/web",
     "dev:api": "npm run dev -w @pat/api",
     "test": "npm run test -w @pat/domain",
-    "test:all": "npm run test --workspaces --if-present"
+    "test:all": "npm run test --workspaces --if-present",
+    "2fa:reset": "bash scripts/reset-2fa.sh"
   }
 }
