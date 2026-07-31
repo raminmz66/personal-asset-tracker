@@ -26,14 +26,20 @@ npm run test:all      # run tests in all workspaces
 
 ### Local dev (API + web)
 
-Run in two terminals:
+One command (starts API + web, opens the browser; Ctrl+C stops both):
+
+```bash
+npm run dev
+```
+
+Or run separately:
 
 ```bash
 npm run dev:api   # Hono Worker on http://127.0.0.1:8787 (Wrangler + local D1)
 npm run dev:web   # Vite on http://localhost:5173 — proxies /api to the Worker
 ```
 
-Copy `apps/api/.dev.vars.example` to `apps/api/.dev.vars` and set `SESSION_SECRET` for local auth.
+Copy `apps/api/.dev.vars.example` to `apps/api/.dev.vars` and set `SESSION_SECRET` for local auth (`npm run dev` does this automatically if missing).
 
 ## Deploy (Cloudflare)
 
