@@ -1,0 +1,13 @@
+:root {
+  --page: #f4efe6;
+  --ink: #3d3428;
+  --muted: #6a5f50;
+  --rule: #cbbfad;
+  --accent: #0f6b6b;
+  --danger: #8b3a2f;
+}
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+}
