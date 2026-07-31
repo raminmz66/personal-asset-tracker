@@ -16,6 +16,14 @@ Design complete (architecture + UI, money-only). Implementation plan ready.
 - [Implementation plan](docs/superpowers/plans/2026-07-31-personal-asset-custody-tracker.md)
 - [UI mockups (money-only)](docs/superpowers/mockups/)
 
+## Development
+
+```bash
+npm install
+npm test              # run @pat/domain tests
+npm run test:all      # run tests in all workspaces
+```
+
 ## Stack (locked)
 
 - **Client:** Mobile-first Persian RTL PWA (React + Vite), Calm notebook UI, Vazirmatn, Jalali dates

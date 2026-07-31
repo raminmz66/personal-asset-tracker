@@ -1,0 +1,9 @@
+{
+  "name": "personal-asset-tracker",
+  "private": true,
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "test": "npm run test -w @pat/domain",
+    "test:all": "npm run test --workspaces --if-present"
+  }
+}
