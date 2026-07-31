@@ -5,6 +5,10 @@ export type AuthStatus = {
   authenticated: boolean
 }
 
+export type TotpStatus = { enabled: boolean }
+
+export type TotpEnrollment = { secret: string; otpauthUri: string }
+
 export type PersonWithCount = Person & { activeBalanceCount: number }
 
 export type BalanceWithQuantity = Balance & { quantity: number }
@@ -72,10 +76,30 @@ export const api = {
       body: JSON.stringify({ password }),
     }),
 
-  login: (password: string) =>
+  login: (password: string, code?: string) =>
     authFetch<{ ok: true }>('/login', {
       method: 'POST',
+      body: JSON.stringify(code ? { password, code } : { password }),
+    }),
+
+  totpStatus: () => authFetch<TotpStatus>('/totp'),
+
+  totpEnroll: (password: string) =>
+    authFetch<TotpEnrollment>('/totp/enroll', {
+      method: 'POST',
       body: JSON.stringify({ password }),
+    }),
+
+  totpConfirm: (code: string) =>
+    authFetch<{ ok: true }>('/totp/confirm', {
+      method: 'POST',
+      body: JSON.stringify({ code }),
+    }),
+
+  totpDisable: (password: string, code: string) =>
+    authFetch<{ ok: true }>('/totp/disable', {
+      method: 'POST',
+      body: JSON.stringify({ password, code }),
     }),
 
   logout: () =>
@@ -83,10 +107,18 @@ export const api = {
       method: 'POST',
     }),
 
-  changePassword: (currentPassword: string, newPassword: string) =>
+  changePassword: (
+    currentPassword: string,
+    newPassword: string,
+    code?: string,
+  ) =>
     authFetch<{ ok: true }>('/password', {
       method: 'POST',
-      body: JSON.stringify({ currentPassword, newPassword }),
+      body: JSON.stringify(
+        code
+          ? { currentPassword, newPassword, code }
+          : { currentPassword, newPassword },
+      ),
     }),
 
   exportBackup: async (): Promise<FetchResult<Blob>> => {

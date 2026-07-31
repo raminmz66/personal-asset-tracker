@@ -1,12 +1,16 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Navigate, useNavigate } from 'react-router'
 import { api } from '../api/client'
+import { toLatinDigits } from '../format/digits'
 
 const ERROR_MESSAGES: Record<string, string> = {
   invalid_credentials: 'رمز اشتباهه.',
   password_required: 'رمزتو وارد کن.',
   already_setup: 'قبلاً راه‌اندازی شده.',
   request_failed: 'ارتباط با سرور برقرار نشد.',
+  invalid_code: 'کد اشتباهه.',
+  code_required: 'کد دو مرحله‌ای رو وارد کن.',
+  too_many_attempts: 'تلاش زیاد بود. چند دقیقه دیگه امتحان کن.',
 }
 
 function errorMessage(code: string) {
@@ -19,6 +23,8 @@ export function Login() {
   const [setupRequired, setSetupRequired] = useState(false)
   const [authenticated, setAuthenticated] = useState(false)
   const [password, setPassword] = useState('')
+  const [code, setCode] = useState('')
+  const [codeRequired, setCodeRequired] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -58,10 +64,19 @@ export function Login() {
       }
     }
 
-    const loginResult = await api.login(password)
+    const loginResult = await api.login(
+      password,
+      codeRequired ? code : undefined,
+    )
     setSubmitting(false)
 
     if (!loginResult.ok) {
+      if (loginResult.error === 'totp_required') {
+        // Not a failure — the password was accepted, we just need the code.
+        setCodeRequired(true)
+        setError(null)
+        return
+      }
       setError(errorMessage(loginResult.error))
       return
     }
@@ -94,6 +109,34 @@ export function Login() {
             minLength={1}
             disabled={submitting}
           />
+
+          {codeRequired && (
+            <>
+              <label className="auth-label" htmlFor="auth-code">
+                کد دو مرحله‌ای
+              </label>
+              <input
+                id="auth-code"
+                className="auth-input"
+                type="text"
+                inputMode="numeric"
+                dir="ltr"
+                autoComplete="one-time-password"
+                maxLength={6}
+                value={code}
+                onChange={(e) =>
+                  setCode(
+                    toLatinDigits(e.target.value)
+                      .replace(/\D/g, '')
+                      .slice(0, 6),
+                  )
+                }
+                autoFocus
+                required
+                disabled={submitting}
+              />
+            </>
+          )}
 
           {error && <p className="auth-error">{error}</p>}
 
