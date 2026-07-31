@@ -526,6 +526,24 @@ html {
   font-variant-numeric: tabular-nums;
 }
 
+.balance-hero-totals {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin: 0.75rem 0 0;
+}
+
+.balance-hero-total-label {
+  font-size: var(--text-meta);
+  color: var(--muted);
+}
+
+.balance-hero-total-num {
+  margin: 0;
+  font-size: var(--text-action);
+  font-variant-numeric: tabular-nums;
+}
+
 .balance-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;

@@ -247,10 +247,26 @@ export function Balance() {
         ) : (
           <>
             <div className="balance-hero">
-              <div className="balance-hero-label">موجودی فعلی</div>
+              <div className="balance-hero-label">مانده</div>
               <div className="balance-hero-num">
                 {formatAmount(detail.quantity)}
               </div>
+              {/* واریزی first: under direction:rtl the first grid child sits
+                  on the right, matching the reading order in, then out. */}
+              <dl className="balance-hero-totals">
+                <div className="balance-hero-total">
+                  <dt className="balance-hero-total-label">کل واریزی</dt>
+                  <dd className="balance-hero-total-num">
+                    {formatAmount(detail.deposited)}
+                  </dd>
+                </div>
+                <div className="balance-hero-total">
+                  <dt className="balance-hero-total-label">کل برگشتی</dt>
+                  <dd className="balance-hero-total-num">
+                    {formatAmount(detail.returned)}
+                  </dd>
+                </div>
+              </dl>
             </div>
 
             {formMode ? (
