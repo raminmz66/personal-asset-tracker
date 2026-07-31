@@ -5,7 +5,7 @@ import { Balance } from './routes/Balance'
 import { Home } from './routes/Home'
 import { Person } from './routes/Person'
 import { Settled } from './routes/Settled'
-import { SettingsPage } from './pages/SettingsPage'
+import { Settings } from './routes/Settings'
 import { Login } from './routes/Login'
 
 function AppShell() {
@@ -38,7 +38,7 @@ const router = createBrowserRouter([
           { path: '/people/:id/settled', element: <Settled /> },
           { path: '/people/:id', element: <Person /> },
           { path: '/balances/:id', element: <Balance /> },
-          { path: '/settings', element: <SettingsPage /> },
+          { path: '/settings', element: <Settings /> },
         ],
       },
     ],

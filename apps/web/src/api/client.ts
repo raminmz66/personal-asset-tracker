@@ -83,6 +83,27 @@ export const api = {
       method: 'POST',
     }),
 
+  changePassword: (currentPassword: string, newPassword: string) =>
+    authFetch<{ ok: true }>('/password', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    }),
+
+  exportBackup: async (): Promise<FetchResult<Blob>> => {
+    const res = await fetch('/api/backup/export', { credentials: 'include' })
+    if (res.ok) {
+      return { ok: true, data: await res.blob() }
+    }
+    return { ok: false, status: res.status, error: await parseError(res) }
+  },
+
+  importBackup: (doc: unknown) =>
+    apiFetch<{ ok: true }>('/backup/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(doc),
+    }),
+
   people: {
     list: () => apiFetch<PersonWithCount[]>('/people'),
 
@@ -175,6 +196,9 @@ export const API_ERROR_MESSAGES: Record<string, string> = {
   invalid_amount: 'مبلغ باید بزرگ‌تر از صفر باشد',
   invalid_date: 'تاریخ نامعتبر است.',
   invalid_type: 'نوع تراکنش نامعتبر است.',
+  invalid_credentials: 'رمز عبور اشتباه است.',
+  invalid_json: 'فایل پشتیبان نامعتبر است.',
+  invalid_export: 'فایل پشتیبان نامعتبر است.',
   request_failed: 'خطا در ارتباط با سرور.',
 }
 
