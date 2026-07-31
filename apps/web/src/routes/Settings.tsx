@@ -1,12 +1,26 @@
-import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from 'react'
 import { useNavigate } from 'react-router'
 import { api, apiErrorMessage } from '../api/client'
 import { BackButton } from '../components/BackButton'
 import { ConfirmPress } from '../components/ConfirmPress'
 import { SyncBanner } from '../components/SyncBanner'
+import { TotpEnroll } from '../components/TotpEnroll'
 import { todayGregorian } from '../dates/jalali'
 import { formatRelativeFa } from '../dates/relative-fa'
+import { toLatinDigits } from '../format/digits'
 import { useSync } from '../sync/SyncContext'
+
+/** Keeps only digits, capped at six — shared by both code inputs here. */
+function sixDigits(value: string): string {
+  return toLatinDigits(value).replace(/\D/g, '').slice(0, 6)
+}
 
 export function Settings() {
   const navigate = useNavigate()
@@ -16,6 +30,13 @@ export function Settings() {
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordCode, setPasswordCode] = useState('')
+
+  const [totpEnabled, setTotpEnabled] = useState<boolean | null>(null)
+  const [enrolling, setEnrolling] = useState(false)
+  const [disablePassword, setDisablePassword] = useState('')
+  const [disableCode, setDisableCode] = useState('')
+  const [totpError, setTotpError] = useState<string | null>(null)
   const [passwordSubmitting, setPasswordSubmitting] = useState(false)
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null)
@@ -44,7 +65,12 @@ export function Settings() {
     }
 
     setPasswordSubmitting(true)
-    const result = await api.changePassword(currentPassword, newPassword)
+    // With 2FA on the API requires a code here too.
+    const result = await api.changePassword(
+      currentPassword,
+      newPassword,
+      totpEnabled ? passwordCode : undefined,
+    )
     setPasswordSubmitting(false)
 
     if (!result.ok) {
@@ -55,7 +81,29 @@ export function Settings() {
     setCurrentPassword('')
     setNewPassword('')
     setConfirmPassword('')
+    setPasswordCode('')
     setPasswordSuccess('رمز عوض شد.')
+  }
+
+  const loadTotp = useCallback(async () => {
+    const result = await api.totpStatus()
+    setTotpEnabled(result.ok ? result.data.enabled : false)
+  }, [])
+
+  useEffect(() => {
+    void loadTotp()
+  }, [loadTotp])
+
+  async function handleDisableTotp() {
+    setTotpError(null)
+    const result = await api.totpDisable(disablePassword, disableCode)
+    if (!result.ok) {
+      setTotpError(apiErrorMessage(result.error))
+      return
+    }
+    setDisablePassword('')
+    setDisableCode('')
+    await loadTotp()
   }
 
   async function handleExport() {
@@ -182,6 +230,27 @@ export function Settings() {
               disabled={passwordSubmitting}
             />
 
+            {totpEnabled && (
+              <>
+                <label className="settings-label" htmlFor="password-code">
+                  کد دو مرحله‌ای
+                </label>
+                <input
+                  id="password-code"
+                  className="settings-input"
+                  type="text"
+                  inputMode="numeric"
+                  dir="ltr"
+                  autoComplete="one-time-password"
+                  maxLength={6}
+                  value={passwordCode}
+                  onChange={(e) => setPasswordCode(sixDigits(e.target.value))}
+                  required
+                  disabled={passwordSubmitting}
+                />
+              </>
+            )}
+
             {passwordError && (
               <p className="settings-error">{passwordError}</p>
             )}
@@ -197,6 +266,81 @@ export function Settings() {
               {passwordSubmitting ? '…' : 'ذخیره رمز'}
             </button>
           </form>
+        </section>
+
+        <section className="settings-section">
+          <h2 className="settings-sec-title">ورود دو مرحله‌ای</h2>
+
+          {totpEnabled === null ? (
+            <p className="settings-lead">…</p>
+          ) : enrolling ? (
+            <TotpEnroll
+              onEnabled={async () => {
+                setEnrolling(false)
+                setTotpError(null)
+                await loadTotp()
+              }}
+              onCancel={() => setEnrolling(false)}
+            />
+          ) : totpEnabled ? (
+            <>
+              <p className="settings-lead">
+                فعاله. برای ورود، هم رمز لازمه هم کد.
+              </p>
+
+              <label className="settings-label" htmlFor="totp-off-password">
+                رمز عبور
+              </label>
+              <input
+                id="totp-off-password"
+                className="settings-input"
+                type="password"
+                autoComplete="current-password"
+                value={disablePassword}
+                onChange={(e) => setDisablePassword(e.target.value)}
+              />
+
+              <label className="settings-label" htmlFor="totp-off-code">
+                کد دو مرحله‌ای
+              </label>
+              <input
+                id="totp-off-code"
+                className="settings-input"
+                type="text"
+                inputMode="numeric"
+                dir="ltr"
+                autoComplete="one-time-password"
+                maxLength={6}
+                value={disableCode}
+                onChange={(e) => setDisableCode(sixDigits(e.target.value))}
+              />
+
+              <ConfirmPress
+                label="غیرفعال کردن"
+                confirmLabel="مطمئنی؟ دوباره بزن"
+                onConfirm={handleDisableTotp}
+                className="settings-btn settings-btn--ghost"
+              />
+            </>
+          ) : (
+            <>
+              <p className="settings-lead">
+                یه لایهٔ امنیت بیشتر با برنامهٔ اعتبارسنجی.
+              </p>
+              <button
+                type="button"
+                className="settings-btn"
+                onClick={() => {
+                  setTotpError(null)
+                  setEnrolling(true)
+                }}
+              >
+                فعال کردن
+              </button>
+            </>
+          )}
+
+          {totpError && <p className="settings-error">{totpError}</p>}
         </section>
 
         <section className="settings-section">
