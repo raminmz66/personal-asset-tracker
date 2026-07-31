@@ -391,6 +391,13 @@ html {
   font-variant-numeric: tabular-nums;
 }
 
+/* Settled rows show what passed through, not a live balance — so the
+   number is present but recessive. */
+.person-list--settled .balance-row__qty {
+  font-weight: 400;
+  color: var(--muted);
+}
+
 .person-settled {
   display: block;
   margin-top: 1.125rem;

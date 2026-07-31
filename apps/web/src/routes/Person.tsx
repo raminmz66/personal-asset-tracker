@@ -268,7 +268,7 @@ export function Person() {
                     key={balance.id}
                     id={balance.id}
                     label={balance.label}
-                    quantity={balance.quantity}
+                    amount={balance.quantity}
                   />
                 ))}
               </div>

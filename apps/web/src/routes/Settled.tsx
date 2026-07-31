@@ -82,13 +82,13 @@ export function Settled() {
             <div className="person-sec">
               <span>{name}</span>
             </div>
-            <div className="person-list">
+            <div className="person-list person-list--settled">
               {balances.map((balance) => (
                 <BalanceRow
                   key={balance.id}
                   id={balance.id}
                   label={balance.label}
-                  quantity={balance.quantity}
+                  amount={balance.deposited}
                 />
               ))}
             </div>
