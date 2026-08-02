@@ -1,6 +1,8 @@
+import { SESSION_TTL_MS } from "@pat/domain";
+
 export const SESSION_COOKIE_NAME = "session";
-export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
-export const SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
+export { SESSION_TTL_MS };
+export const SESSION_MAX_AGE_SECONDS = SESSION_TTL_MS / 1000;
 export const PASSWORD_HASH_KEY = "password_hash";
 
 const PBKDF2_ITERATIONS = 100_000;

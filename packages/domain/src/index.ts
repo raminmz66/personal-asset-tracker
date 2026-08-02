@@ -17,3 +17,4 @@ export {
   parseExportDoc,
 } from "./export-schema";
 export { personShortStatus } from "./status";
+export { SESSION_TTL_MS } from "./session";
