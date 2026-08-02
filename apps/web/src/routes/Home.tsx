@@ -8,7 +8,7 @@ import { peopleFromSnapshot, type PersonListItem } from '../sync/snapshot-utils'
 import { useSync } from '../sync/SyncContext'
 
 export function Home() {
-  const { online, refresh, mutate } = useSync()
+  const { refresh, mutate } = useSync()
   const [people, setPeople] = useState<PersonListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
@@ -54,13 +54,22 @@ export function Home() {
     setError(null)
     setSubmitting(true)
 
-    try {
-      await mutate({ method: 'POST', path: '/people', body: { name } })
+    // Minted here, not after the call, so the queued POST and the optimistic
+    // snapshot row share an id — that is what lets the row be edited or given
+    // a balance before the queue drains.
+    const id = crypto.randomUUID()
 
-      if (!online) {
+    try {
+      const result = await mutate({
+        method: 'POST',
+        path: '/people',
+        body: { id, name },
+      })
+
+      if (result.queued) {
         const now = new Date().toISOString()
         const person: Person = {
-          id: crypto.randomUUID(),
+          id,
           name,
           note: null,
           createdAt: now,
