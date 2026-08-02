@@ -1,9 +1,20 @@
-import { getOutbox, setOutbox } from './cache'
-import { peekAll, removeHead, type OutboxEntry } from './outbox'
+import { getFailed, getOutbox, setFailed, setOutbox } from './cache'
+import {
+  applyFlushDecision,
+  classifyFlush,
+  type FlushDecision,
+} from './flush-policy'
+import { type OutboxEntry } from './outbox'
 
 export type FlushResult =
-  | { ok: true; flushed: number }
-  | { ok: false; reason: 'auth' | 'failed'; flushed: number; status: number }
+  | { ok: true; flushed: number; parked: number }
+  | {
+      ok: false
+      reason: 'auth' | 'failed'
+      flushed: number
+      parked: number
+      status: number
+    }
 
 async function sendEntry(entry: OutboxEntry): Promise<Response> {
   const init: RequestInit = {
@@ -19,32 +30,64 @@ async function sendEntry(entry: OutboxEntry): Promise<Response> {
   return fetch(`/api${entry.path}`, init)
 }
 
+async function readError(res: Response): Promise<string> {
+  try {
+    const body = (await res.json()) as { error?: string }
+    return body.error ?? 'request_failed'
+  } catch {
+    return 'request_failed'
+  }
+}
+
+/**
+ * Drains the outbox, setting aside entries that can never succeed.
+ *
+ * Only `retry` and `auth` stop the drain. Anything else advances the head, so
+ * one dead write no longer blocks every change made after it.
+ */
 export async function flushOutbox(): Promise<FlushResult> {
   let flushed = 0
+  let parked = 0
 
   while (true) {
     const queue = await getOutbox()
-    const head = peekAll(queue)[0]
-    if (!head) {
-      return { ok: true, flushed }
+    if (!queue[0]) {
+      return { ok: true, flushed, parked }
     }
 
-    let res: Response
+    let decision: FlushDecision
+    let status = 0
+    let error = 'offline'
+
     try {
-      res = await sendEntry(head)
+      const res = await sendEntry(queue[0])
+      status = res.status
+      decision = classifyFlush(status, queue[0].method)
+      if (decision === 'park') {
+        error = await readError(res)
+      }
     } catch {
-      return { ok: false, reason: 'failed', flushed, status: 0 }
+      // Never reached the server; keep the entry and try again later.
+      decision = 'retry'
     }
 
-    if (res.status === 401) {
-      return { ok: false, reason: 'auth', flushed, status: 401 }
+    const step = applyFlushDecision(
+      { queue, failed: await getFailed() },
+      decision,
+      { status, error, failedAt: new Date().toISOString() },
+    )
+
+    if (step.stop) {
+      const reason = decision === 'auth' ? 'auth' : 'failed'
+      return { ok: false, reason, flushed, parked, status }
     }
 
-    if (!res.ok) {
-      return { ok: false, reason: 'failed', flushed, status: res.status }
+    await setOutbox(step.queue)
+    if (decision === 'park') {
+      await setFailed(step.failed)
+      parked += 1
+    } else {
+      flushed += 1
     }
-
-    await setOutbox(removeHead(queue))
-    flushed += 1
   }
 }

@@ -1,10 +1,12 @@
 import type { Balance, Person, Transaction } from '@pat/domain'
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
+import { type FailedEntry } from './flush-policy'
 import { type OutboxEntry } from './outbox'
 
 export const SNAPSHOT_KEY = 'pat:snapshot'
 export const OUTBOX_KEY = 'pat:outbox'
 export const SESSION_KEY = 'pat:session'
+export const FAILED_KEY = 'pat:failed'
 
 export type Snapshot = {
   people: Person[]
@@ -67,4 +69,20 @@ export async function getOutbox(): Promise<OutboxEntry[]> {
 export async function setOutbox(queue: OutboxEntry[]): Promise<void> {
   const db = await getDb()
   await db.put('kv', queue, OUTBOX_KEY)
+}
+
+/** Writes that can never succeed, set aside so the queue keeps draining. */
+export async function getFailed(): Promise<FailedEntry[]> {
+  return (await getKv<FailedEntry[]>(FAILED_KEY)) ?? []
+}
+
+export async function setFailed(entries: FailedEntry[]): Promise<void> {
+  await setKv(FAILED_KEY, entries)
+}
+
+/** Everything this device holds. Used on deliberate logout. */
+export async function clearLocalData(): Promise<void> {
+  await Promise.all(
+    [SNAPSHOT_KEY, OUTBOX_KEY, FAILED_KEY, SESSION_KEY].map(deleteKv),
+  )
 }
