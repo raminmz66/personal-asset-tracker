@@ -8,8 +8,18 @@ import {
   type ReactNode,
 } from 'react'
 import { useNavigate } from 'react-router'
-import { getOutbox, getSnapshot, setOutbox, setSnapshot, type Snapshot } from './cache'
+import { clearLocalSession } from '../auth/local-session'
+import {
+  getFailed,
+  getOutbox,
+  getSnapshot,
+  setFailed,
+  setOutbox,
+  setSnapshot,
+  type Snapshot,
+} from './cache'
 import { flushOutbox } from './flush'
+import { type FailedEntry } from './flush-policy'
 import { classifyMutate } from './mutate-policy'
 import { enqueue } from './outbox'
 
@@ -39,10 +49,14 @@ export class MutateError extends Error {
 export type SyncContextValue = {
   online: boolean
   pendingCount: number
+  failedEntries: FailedEntry[]
+  failedCount: number
   lastSyncedAt: string | null
   refresh: () => Promise<void>
   mutate: (input: MutateInput) => Promise<MutateResult>
   clearOutbox: () => Promise<void>
+  discardFailed: (id: string) => Promise<void>
+  discardAllFailed: () => Promise<void>
 }
 
 const SyncContext = createContext<SyncContextValue | null>(null)
@@ -56,14 +70,22 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate()
   const [online, setOnline] = useState(() => navigator.onLine)
   const [pendingCount, setPendingCount] = useState(0)
+  const [failedEntries, setFailedEntries] = useState<FailedEntry[]>([])
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null)
 
   const forceLogin = useCallback(() => {
+    // Only the marker: an expired cookie must not destroy unsynced work, which
+    // still flushes after the next login.
+    void clearLocalSession()
     navigate('/login', { replace: true })
   }, [navigate])
 
   const syncPendingCount = useCallback(async () => {
     setPendingCount(await loadPendingCount())
+  }, [])
+
+  const syncFailed = useCallback(async () => {
+    setFailedEntries(await getFailed())
   }, [])
 
   const refresh = useCallback(async () => {
@@ -149,7 +171,13 @@ export function SyncProvider({ children }: { children: ReactNode }) {
           throw new MutateError(code)
         }
         case 'ok':
-          await refresh()
+          // The write landed. A refresh that fails afterwards is a stale view,
+          // not a failed write, and must not be reported as one.
+          try {
+            await refresh()
+          } catch {
+            /* keep the cached snapshot */
+          }
           return { queued: false }
       }
     },
@@ -161,6 +189,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
 
     const result = await flushOutbox()
     await syncPendingCount()
+    await syncFailed()
 
     if (result.ok === false && result.reason === 'auth') {
       forceLogin()
@@ -170,11 +199,12 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     if (result.flushed > 0) {
       await refresh()
     }
-  }, [forceLogin, refresh, syncPendingCount])
+  }, [forceLogin, refresh, syncFailed, syncPendingCount])
 
   useEffect(() => {
     void syncPendingCount()
-  }, [syncPendingCount])
+    void syncFailed()
+  }, [syncFailed, syncPendingCount])
 
   useEffect(() => {
     let cancelled = false
@@ -211,9 +241,41 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     setPendingCount(0)
   }, [])
 
+  const discardFailed = useCallback(async (id: string) => {
+    const next = (await getFailed()).filter((entry) => entry.id !== id)
+    await setFailed(next)
+    setFailedEntries(next)
+  }, [])
+
+  const discardAllFailed = useCallback(async () => {
+    await setFailed([])
+    setFailedEntries([])
+  }, [])
+
   const value = useMemo(
-    () => ({ online, pendingCount, lastSyncedAt, refresh, mutate, clearOutbox }),
-    [online, pendingCount, lastSyncedAt, refresh, mutate, clearOutbox],
+    () => ({
+      online,
+      pendingCount,
+      failedEntries,
+      failedCount: failedEntries.length,
+      lastSyncedAt,
+      refresh,
+      mutate,
+      clearOutbox,
+      discardFailed,
+      discardAllFailed,
+    }),
+    [
+      online,
+      pendingCount,
+      failedEntries,
+      lastSyncedAt,
+      refresh,
+      mutate,
+      clearOutbox,
+      discardFailed,
+      discardAllFailed,
+    ],
   )
 
   return <SyncContext.Provider value={value}>{children}</SyncContext.Provider>

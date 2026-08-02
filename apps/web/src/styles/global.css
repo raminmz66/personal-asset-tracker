@@ -158,6 +158,45 @@ html {
   flex-shrink: 0;
 }
 
+.sync-banner--failed {
+  background: #f3e3df;
+  color: var(--danger);
+}
+
+.settings-failed {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+}
+
+.settings-failed-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.settings-failed-what {
+  flex: 1;
+  font-size: var(--text-status);
+}
+
+.settings-failed-when {
+  color: var(--muted);
+  font-size: var(--text-meta);
+}
+
+.settings-failed-discard {
+  min-height: 44px;
+  padding: 0 0.5rem;
+  border: 0;
+  background: none;
+  color: var(--danger);
+  font-family: inherit;
+  font-size: var(--text-meta);
+}
+
 .home {
   display: flex;
   flex-direction: column;

@@ -1,16 +1,25 @@
 import { useSync } from '../sync/SyncContext'
 
 export function SyncBanner() {
-  const { online, pendingCount } = useSync()
+  const { online, pendingCount, failedCount } = useSync()
 
-  if (online && pendingCount === 0) return null
+  // A failure needs attention more than a pending sync does, so it wins.
+  const message =
+    failedCount > 0
+      ? `${failedCount.toLocaleString('fa-IR')} تغییر ثبت نشد — تو تنظیمات ببین`
+      : !online
+        ? 'آفلاینی — تغییرات اینجا می‌مونه'
+        : pendingCount > 0
+          ? `${pendingCount.toLocaleString('fa-IR')} تغییر در انتظار همگام‌سازی`
+          : null
 
-  const message = !online
-    ? 'آفلاینی — تغییرات اینجا می‌مونه'
-    : `${pendingCount.toLocaleString('fa-IR')} تغییر در انتظار همگام‌سازی`
+  if (!message) return null
 
   return (
-    <div className="sync-banner" role="status">
+    <div
+      className={`sync-banner${failedCount > 0 ? ' sync-banner--failed' : ''}`}
+      role="status"
+    >
       {message}
     </div>
   )
