@@ -19,6 +19,9 @@ export default defineConfig({
         lang: 'fa',
         dir: 'rtl',
         start_url: '/',
+        // Pinned so the app identity survives a future start_url change —
+        // without it, changing start_url orphans every existing install.
+        id: '/',
         icons: [
           {
             src: 'icon-192.png',
@@ -39,9 +42,26 @@ export default defineConfig({
             purpose: 'maskable',
           },
         ],
+        screenshots: [
+          {
+            src: 'screenshots/screenshot-narrow.png',
+            sizes: '1080x1920',
+            type: 'image/png',
+            form_factor: 'narrow',
+          },
+          {
+            src: 'screenshots/screenshot-wide.png',
+            sizes: '1920x1080',
+            type: 'image/png',
+            form_factor: 'wide',
+          },
+        ],
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // Only the browser's install sheet ever fetches these, so precaching
+        // them would be pure install weight.
+        globIgnores: ['**/screenshots/**'],
         navigateFallbackDenylist: [/^\/api/],
       },
     }),

@@ -77,7 +77,7 @@ function snapshotWith(transactions: Transaction[]): Snapshot {
 
 describe('Person delete', () => {
   beforeEach(() => {
-    mutateMock.mockReset().mockResolvedValue(undefined)
+    mutateMock.mockReset().mockResolvedValue({ queued: false })
     navigateMock.mockReset()
     setSnapshotMock.mockReset().mockResolvedValue(undefined)
     getSnapshotMock.mockReset()
@@ -144,7 +144,7 @@ describe('Person delete', () => {
     ).toBeTruthy()
   })
 
-  it('does not write the snapshot while online (server cascade handles it)', async () => {
+  it('does not write the snapshot when the write reached the server', async () => {
     getSnapshotMock.mockResolvedValue(
       snapshotWith([tx('t1', 'deposit', 50), tx('t2', 'return', 50)]),
     )
@@ -159,5 +159,26 @@ describe('Person delete', () => {
 
     await waitFor(() => expect(mutateMock).toHaveBeenCalled())
     expect(setSnapshotMock).not.toHaveBeenCalled()
+  })
+
+  it('writes the snapshot whenever the write was queued, online or not', async () => {
+    // The point of the { queued } contract: navigator.onLine is still true
+    // here, but the server was unreachable, so the row must vanish locally.
+    mutateMock.mockResolvedValue({ queued: true })
+    getSnapshotMock.mockResolvedValue(
+      snapshotWith([tx('t1', 'deposit', 50), tx('t2', 'return', 50)]),
+    )
+    render(<Person />)
+
+    fireEvent.click(
+      await waitFor(() => screen.getByRole('button', { name: 'حذف شخص' })),
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: '۱ موجودی تسویه‌شده حذف شود؟' }),
+    )
+
+    await waitFor(() => expect(setSnapshotMock).toHaveBeenCalled())
+    const written = setSnapshotMock.mock.calls[0][0] as { people: unknown[] }
+    expect(written.people).toEqual([])
   })
 })

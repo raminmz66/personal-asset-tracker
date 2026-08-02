@@ -120,6 +120,10 @@ export function Balance() {
 
     try {
       if (formMode === 'edit' && editingTx) {
+        // Pre-flight, so it stays keyed on `online`: only when we know the
+        // server is out of reach does the local snapshot become the authority
+        // on over-return. Running it while we believe we are online could
+        // reject a valid write from a stale snapshot.
         if (!online) {
           const snapshot = await getSnapshot()
           const txs = snapshot?.transactions.filter((t) => t.balanceId === id) ?? []
@@ -130,12 +134,12 @@ export function Balance() {
             assertBalanceReturnAllowed(qty, values.amount)
           }
         }
-        await mutate({
+        const result = await mutate({
           method: 'PATCH',
           path: `/transactions/${editingTx.id}`,
           body: values,
         })
-        if (!online) {
+        if (result.queued) {
           const now = new Date().toISOString()
           const updated: Transaction = {
             ...editingTx,
@@ -148,6 +152,7 @@ export function Balance() {
           await applyOfflineTransaction(updated, 'update')
         }
       } else {
+        // Pre-flight; see the note above.
         if (!online) {
           const snapshot = await getSnapshot()
           const txs = snapshot?.transactions.filter((t) => t.balanceId === id) ?? []
@@ -156,15 +161,16 @@ export function Balance() {
             assertBalanceReturnAllowed(qty, values.amount)
           }
         }
-        await mutate({
+        const txId = crypto.randomUUID()
+        const result = await mutate({
           method: 'POST',
           path: `/balances/${id}/transactions`,
-          body: values,
+          body: { id: txId, ...values },
         })
-        if (!online) {
+        if (result.queued) {
           const now = new Date().toISOString()
           const tx: Transaction = {
-            id: crypto.randomUUID(),
+            id: txId,
             balanceId: id,
             type: values.type,
             amount: values.amount,
@@ -197,11 +203,11 @@ export function Balance() {
     setError(null)
 
     try {
-      await mutate({
+      const result = await mutate({
         method: 'DELETE',
         path: `/transactions/${tx.id}`,
       })
-      if (!online) {
+      if (result.queued) {
         await applyOfflineTransaction(tx, 'delete', tx.id)
       }
       closeForm()

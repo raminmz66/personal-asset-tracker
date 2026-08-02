@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Navigate, useNavigate } from 'react-router'
-import { api } from '../api/client'
+import { api, isFetchFailure, OFFLINE_STATUS } from '../api/client'
+import { setLocalSession } from '../auth/local-session'
 import { toLatinDigits } from '../format/digits'
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -27,10 +28,13 @@ export function Login() {
   const [codeRequired, setCodeRequired] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [offline, setOffline] = useState(false)
 
   useEffect(() => {
     api.status().then((result) => {
-      if (result.ok) {
+      if (isFetchFailure(result)) {
+        if (result.status === OFFLINE_STATUS) setOffline(true)
+      } else {
         setSetupRequired(result.data.setupRequired)
         setAuthenticated(result.data.authenticated)
       }
@@ -42,6 +46,23 @@ export function Login() {
     return (
       <div className="page auth-loading">
         <p>در حال بارگذاری…</p>
+      </div>
+    )
+  }
+
+  // Nothing on this screen works without a network, so say so rather than
+  // offering a form that can only fail.
+  if (offline) {
+    return (
+      <div className="page auth-offline">
+        <p>آفلاینی — برای ورود باید به اینترنت وصل بشی</p>
+        <button
+          type="button"
+          className="auth-retry"
+          onClick={() => window.location.reload()}
+        >
+          دوباره امتحان کن
+        </button>
       </div>
     )
   }
@@ -81,6 +102,7 @@ export function Login() {
       return
     }
 
+    await setLocalSession(new Date())
     navigate('/', { replace: true })
   }
 

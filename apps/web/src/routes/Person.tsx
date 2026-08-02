@@ -22,7 +22,7 @@ import { useSync } from '../sync/SyncContext'
 export function Person() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { online, refresh, mutate } = useSync()
+  const { refresh, mutate } = useSync()
   const [name, setName] = useState<string | null>(null)
   const [balances, setBalances] = useState<BalanceListItem[]>([])
   const [settledCount, setSettledCount] = useState(0)
@@ -91,17 +91,24 @@ export function Person() {
     setError(null)
     setSubmitting(true)
 
+    const balanceId = crypto.randomUUID()
+    const txId = crypto.randomUUID()
+
     try {
-      await mutate({
+      const result = await mutate({
         method: 'POST',
         path: `/people/${id}/balances`,
-        body: { label: trimmedLabel, amount: parsedAmount, date: gregorianDate },
+        body: {
+          id: balanceId,
+          txId,
+          label: trimmedLabel,
+          amount: parsedAmount,
+          date: gregorianDate,
+        },
       })
 
-      if (!online) {
+      if (result.queued) {
         const now = new Date().toISOString()
-        const balanceId = crypto.randomUUID()
-        const txId = crypto.randomUUID()
         const balance: Balance = {
           id: balanceId,
           personId: id,
@@ -146,9 +153,9 @@ export function Person() {
     setDeleting(true)
 
     try {
-      await mutate({ method: 'DELETE', path: `/people/${id}` })
+      const result = await mutate({ method: 'DELETE', path: `/people/${id}` })
 
-      if (!online) {
+      if (result.queued) {
         const snapshot = await getSnapshot()
         if (snapshot) {
           await setSnapshot({

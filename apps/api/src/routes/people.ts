@@ -8,6 +8,7 @@ import {
 } from "@pat/domain";
 import type { Bindings } from "../env";
 import { enableForeignKeys } from "../db";
+import { isDuplicateKeyError, resolveId } from "../ids";
 import { requireAuth } from "../middleware/requireAuth";
 
 type PersonRow = {
@@ -159,9 +160,9 @@ people.get("/", async (c) => {
 });
 
 people.post("/", async (c) => {
-  let body: { name?: unknown; note?: unknown };
+  let body: { id?: unknown; name?: unknown; note?: unknown };
   try {
-    body = await c.req.json<{ name?: unknown; note?: unknown }>();
+    body = await c.req.json<{ id?: unknown; name?: unknown; note?: unknown }>();
   } catch {
     return c.json({ error: "invalid_json" }, 400);
   }
@@ -183,14 +184,24 @@ people.post("/", async (c) => {
         ? body.note
         : null;
 
-  const id = crypto.randomUUID();
+  const id = resolveId(body.id);
   const now = new Date().toISOString();
   await enableForeignKeys(c.env.DB);
-  await c.env.DB.prepare(
-    "INSERT INTO people (id, name, note, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
-  )
-    .bind(id, name, note, now, now)
-    .run();
+
+  try {
+    await c.env.DB.prepare(
+      "INSERT INTO people (id, name, note, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+    )
+      .bind(id, name, note, now, now)
+      .run();
+  } catch (err) {
+    if (!isDuplicateKeyError(err)) throw err;
+    // A queued write that already got through on an earlier attempt. Return
+    // the row that exists rather than failing a retry that changed nothing.
+    const existing = await fetchPersonRow(c.env.DB, id);
+    if (!existing) throw err;
+    return c.json(await personWithActiveBalanceCount(c.env.DB, existing), 200);
+  }
 
   return c.json(
     await personWithActiveBalanceCount(c.env.DB, {

@@ -15,6 +15,8 @@ import { TotpEnroll } from '../components/TotpEnroll'
 import { todayGregorian } from '../dates/jalali'
 import { formatRelativeFa } from '../dates/relative-fa'
 import { toLatinDigits } from '../format/digits'
+import { clearLocalData } from '../sync/cache'
+import { describeEntry } from '../sync/describe-entry'
 import { useSync } from '../sync/SyncContext'
 
 /** Keeps only digits, capped at six — shared by both code inputs here. */
@@ -24,7 +26,17 @@ function sixDigits(value: string): string {
 
 export function Settings() {
   const navigate = useNavigate()
-  const { online, lastSyncedAt, refresh, clearOutbox } = useSync()
+  const {
+    online,
+    lastSyncedAt,
+    refresh,
+    clearOutbox,
+    pendingCount,
+    failedEntries,
+    discardFailed,
+    discardAllFailed,
+  } = useSync()
+  const unsyncedCount = pendingCount + failedEntries.length
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [currentPassword, setCurrentPassword] = useState('')
@@ -165,6 +177,9 @@ export function Settings() {
   async function handleLogout() {
     setLoggingOut(true)
     await api.logout()
+    // Deliberate logout, so the cached ledger goes too — a logged-out phone
+    // should not still hold every balance in IndexedDB.
+    await clearLocalData()
     navigate('/login', { replace: true })
   }
 
@@ -382,15 +397,64 @@ export function Settings() {
           />
         </section>
 
+        {failedEntries.length > 0 && (
+          <section className="settings-section">
+            <h2 className="settings-sec-title">تغییرات ثبت‌نشده</h2>
+            <p className="settings-lead">
+              اینا به سرور نرسیدن و دوباره هم تلاش نمی‌شن.
+            </p>
+            <ul className="settings-failed">
+              {failedEntries.map((entry) => (
+                <li key={entry.id} className="settings-failed-row">
+                  <span className="settings-failed-what">
+                    {describeEntry(entry)}
+                  </span>
+                  <span className="settings-failed-when">
+                    {formatRelativeFa(entry.failedAt)}
+                  </span>
+                  <button
+                    type="button"
+                    className="settings-failed-discard"
+                    onClick={() => void discardFailed(entry.id)}
+                  >
+                    پاک کن
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <ConfirmPress
+              label="همه رو پاک کن"
+              confirmLabel="مطمئنی؟ دوباره بزن"
+              onConfirm={() => void discardAllFailed()}
+              className="settings-btn settings-btn--ghost"
+            />
+          </section>
+        )}
+
         <section className="settings-section settings-section--last">
-          <button
-            type="button"
-            className="settings-logout"
-            onClick={handleLogout}
-            disabled={loggingOut}
-          >
-            {loggingOut ? '…' : 'خروج از حساب'}
-          </button>
+          {unsyncedCount > 0 ? (
+            <>
+              <p className="settings-lead">
+                {`${unsyncedCount.toLocaleString('fa-IR')} تغییر هنوز همگام نشده. خارج بشی پاک می‌شه.`}
+              </p>
+              <ConfirmPress
+                label={loggingOut ? '…' : 'خروج از حساب'}
+                confirmLabel="به‌هرحال خارج شو"
+                onConfirm={() => void handleLogout()}
+                disabled={loggingOut}
+                className="settings-logout"
+              />
+            </>
+          ) : (
+            <button
+              type="button"
+              className="settings-logout"
+              onClick={handleLogout}
+              disabled={loggingOut}
+            >
+              {loggingOut ? '…' : 'خروج از حساب'}
+            </button>
+          )}
         </section>
       </div>
 
