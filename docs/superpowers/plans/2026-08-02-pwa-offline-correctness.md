@@ -311,6 +311,9 @@ Rejecting anything non-v4 is deliberate: it keeps the id space identical to what
 
 - [ ] **Step 4: Make a duplicate id idempotent**
 
+For `POST /balances/:id/transactions`, look up an existing row with the client id **before** running validation, not after. A retried `return` whose first attempt got through would otherwise be measured against the balance it already reduced, fail `assertBalanceReturnAllowed`, and be parked as a dead write.
+
+
 Wrap each `INSERT` (and the `batch` in create-with-deposit) in `try`/`catch`. When the error message contains `UNIQUE` or `PRIMARY KEY`, the row already exists because a retried queue entry got through the first time — so `SELECT` it and return it with `200` instead of `201`. Any other error rethrows.
 
 For create-with-deposit, the `batch` is atomic, so a duplicate `balanceId` fails the whole batch cleanly; refetch the balance and its transactions and return the same shape the success path returns.
@@ -362,7 +365,9 @@ Each of the 8 optimistic blocks currently mints `crypto.randomUUID()` *after* th
 
 - [ ] **Step 4: Switch the condition**
 
-Change all 8 blocks from `if (!online)` to `if (result.queued)`. Grep afterwards: `grep -rn 'if (!online)' apps/web/src/routes` must return zero matches.
+Change the 6 **optimistic-write** blocks from `if (!online)` to `if (result.queued)`.
+
+The other 2 blocks in `Balance.tsx` are **pre-flight over-return guards**, not optimistic writes, and stay keyed on `online`: only when we know the server is out of reach does the local snapshot become the authority on over-return. Running them while we believe we are online could reject a valid write from a stale snapshot. Grep afterwards: `grep -rn 'if (!online)' apps/web/src/routes` must return exactly those 2 matches, both immediately above a `mutate` call.
 
 - [ ] **Step 5: Verify** — `npm run test -w @pat/web` passes.
 - [ ] **Step 6: Commit** — `fix(web): queue writes whenever the server is unreachable, not just when offline`
