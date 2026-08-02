@@ -7,11 +7,14 @@ import {
   waitFor,
 } from '@testing-library/react'
 
-const { statusMock, loginMock, navigateMock } = vi.hoisted(() => ({
-  statusMock: vi.fn(),
-  loginMock: vi.fn(),
-  navigateMock: vi.fn(),
-}))
+const { statusMock, loginMock, navigateMock, setLocalSessionMock } = vi.hoisted(
+  () => ({
+    statusMock: vi.fn(),
+    loginMock: vi.fn(),
+    navigateMock: vi.fn(),
+    setLocalSessionMock: vi.fn(),
+  }),
+)
 
 vi.mock('react-router', () => ({
   useNavigate: () => navigateMock,
@@ -20,6 +23,13 @@ vi.mock('react-router', () => ({
 
 vi.mock('../api/client', () => ({
   api: { status: statusMock, login: loginMock, setup: vi.fn() },
+  OFFLINE_STATUS: 0,
+  isFetchFailure: (r: { ok: boolean }) => !r.ok,
+}))
+
+// jsdom has no IndexedDB, so the marker is stubbed out here.
+vi.mock('../auth/local-session', () => ({
+  setLocalSession: setLocalSessionMock,
 }))
 
 import { Login } from './Login'
@@ -34,6 +44,7 @@ describe('Login with 2FA', () => {
     })
     loginMock.mockReset()
     navigateMock.mockReset()
+    setLocalSessionMock.mockReset().mockResolvedValue(undefined)
   })
   afterEach(() => cleanup())
 

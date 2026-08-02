@@ -17,9 +17,20 @@ export type BalanceDetail = BalanceWithQuantity & { transactions: Transaction[] 
 
 type ApiError = { error: string }
 
-type FetchResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; status: number; error: string }
+export type FetchFailure = { ok: false; status: number; error: string }
+
+export type FetchResult<T> = { ok: true; data: T } | FetchFailure
+
+/**
+ * `apps/web/tsconfig.app.json` does not extend `tsconfig.base.json`, so the web
+ * app compiles without `strict` and TypeScript will not narrow `FetchResult` on
+ * its `ok` discriminant. This predicate narrows explicitly.
+ */
+export function isFetchFailure<T>(
+  result: FetchResult<T>,
+): result is FetchFailure {
+  return !result.ok
+}
 
 /**
  * `status: 0` means the request never reached the server — the device is
