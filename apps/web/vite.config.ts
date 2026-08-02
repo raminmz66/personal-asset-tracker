@@ -19,6 +19,9 @@ export default defineConfig({
         lang: 'fa',
         dir: 'rtl',
         start_url: '/',
+        // Pinned so the app identity survives a future start_url change —
+        // without it, changing start_url orphans every existing install.
+        id: '/',
         icons: [
           {
             src: 'icon-192.png',

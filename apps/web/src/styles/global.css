@@ -1,6 +1,9 @@
-@import '@fontsource/vazirmatn/400.css';
-@import '@fontsource/vazirmatn/700.css';
-@import '@fontsource/lalezar/400.css';
+/* Arabic subsets only. Latin text falls back to Tahoma, which is the right
+   trade for a Persian UI: it keeps ~60 KB of unused glyphs out of the
+   service worker's precache. */
+@import '@fontsource/vazirmatn/arabic-400.css';
+@import '@fontsource/vazirmatn/arabic-700.css';
+@import '@fontsource/lalezar/arabic-400.css';
 @import './tokens.css';
 
 html {
@@ -21,6 +24,12 @@ html {
   margin: 0 auto;
   height: 100%;
   overflow: hidden;
+  /* Pairs with viewport-fit=cover: keeps content clear of the notch and the
+     home indicator when installed on iOS. */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
+  box-sizing: border-box;
 }
 
 .page {
