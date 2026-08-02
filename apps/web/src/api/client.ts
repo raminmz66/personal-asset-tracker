@@ -21,6 +21,19 @@ type FetchResult<T> =
   | { ok: true; data: T }
   | { ok: false; status: number; error: string }
 
+/**
+ * `status: 0` means the request never reached the server — the device is
+ * offline, the Worker is down, or a captive portal ate it. Distinct from any
+ * real HTTP status, so callers can tell "unreachable" from "refused".
+ */
+export const OFFLINE_STATUS = 0
+
+const OFFLINE_RESULT = {
+  ok: false,
+  status: OFFLINE_STATUS,
+  error: 'offline',
+} as const
+
 async function parseError(res: Response): Promise<string> {
   let error = 'request_failed'
   try {
@@ -36,11 +49,16 @@ async function authFetch<T>(
   path: string,
   init?: RequestInit,
 ): Promise<FetchResult<T>> {
-  const res = await fetch(`/api/auth${path}`, {
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    ...init,
-  })
+  let res: Response
+  try {
+    res = await fetch(`/api/auth${path}`, {
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      ...init,
+    })
+  } catch {
+    return OFFLINE_RESULT
+  }
 
   if (res.ok) {
     const data = (await res.json()) as T
@@ -54,10 +72,15 @@ async function apiFetch<T>(
   path: string,
   init?: RequestInit,
 ): Promise<FetchResult<T>> {
-  const res = await fetch(`/api${path}`, {
-    credentials: 'include',
-    ...init,
-  })
+  let res: Response
+  try {
+    res = await fetch(`/api${path}`, {
+      credentials: 'include',
+      ...init,
+    })
+  } catch {
+    return OFFLINE_RESULT
+  }
 
   if (res.ok) {
     const data = (await res.json()) as T
@@ -122,7 +145,12 @@ export const api = {
     }),
 
   exportBackup: async (): Promise<FetchResult<Blob>> => {
-    const res = await fetch('/api/backup/export', { credentials: 'include' })
+    let res: Response
+    try {
+      res = await fetch('/api/backup/export', { credentials: 'include' })
+    } catch {
+      return OFFLINE_RESULT
+    }
     if (res.ok) {
       return { ok: true, data: await res.blob() }
     }
@@ -232,6 +260,7 @@ export const API_ERROR_MESSAGES: Record<string, string> = {
   invalid_json: 'این فایل پشتیبان به درد نمی‌خوره.',
   invalid_export: 'این فایل پشتیبان به درد نمی‌خوره.',
   request_failed: 'ارتباط با سرور برقرار نشد.',
+  offline: 'ارتباط با سرور برقرار نشد.',
 }
 
 export function apiErrorMessage(code: string): string {
