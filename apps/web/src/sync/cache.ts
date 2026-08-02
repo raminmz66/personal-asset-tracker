@@ -4,6 +4,7 @@ import { type OutboxEntry } from './outbox'
 
 export const SNAPSHOT_KEY = 'pat:snapshot'
 export const OUTBOX_KEY = 'pat:outbox'
+export const SESSION_KEY = 'pat:session'
 
 export type Snapshot = {
   people: Person[]
@@ -30,6 +31,22 @@ function getDb(): Promise<IDBPDatabase<PatDB>> {
     })
   }
   return dbPromise
+}
+
+/** Generic accessors, so every store shares one database connection. */
+export async function getKv<T>(key: string): Promise<T | undefined> {
+  const db = await getDb()
+  return (await db.get('kv', key)) as T | undefined
+}
+
+export async function setKv(key: string, value: unknown): Promise<void> {
+  const db = await getDb()
+  await db.put('kv', value, key)
+}
+
+export async function deleteKv(key: string): Promise<void> {
+  const db = await getDb()
+  await db.delete('kv', key)
 }
 
 export async function getSnapshot(): Promise<Snapshot | undefined> {
