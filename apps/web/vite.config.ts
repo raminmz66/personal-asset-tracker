@@ -42,9 +42,26 @@ export default defineConfig({
             purpose: 'maskable',
           },
         ],
+        screenshots: [
+          {
+            src: 'screenshots/screenshot-narrow.png',
+            sizes: '1080x1920',
+            type: 'image/png',
+            form_factor: 'narrow',
+          },
+          {
+            src: 'screenshots/screenshot-wide.png',
+            sizes: '1920x1080',
+            type: 'image/png',
+            form_factor: 'wide',
+          },
+        ],
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // Only the browser's install sheet ever fetches these, so precaching
+        // them would be pure install weight.
+        globIgnores: ['**/screenshots/**'],
         navigateFallbackDenylist: [/^\/api/],
       },
     }),
