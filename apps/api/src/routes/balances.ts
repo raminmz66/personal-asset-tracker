@@ -11,6 +11,7 @@ import {
 } from "@pat/domain";
 import type { Bindings } from "../env";
 import { enableForeignKeys } from "../db";
+import { isDuplicateKeyError, resolveId } from "../ids";
 import { requireAuth } from "../middleware/requireAuth";
 
 type BalanceRow = {
@@ -141,6 +142,19 @@ async function fetchTransactionsForBalance(
   return (result.results ?? []).map(rowToTransaction);
 }
 
+async function fetchTransactionRow(
+  db: D1Database,
+  id: string,
+): Promise<Transaction | null> {
+  const row = await db
+    .prepare(
+      "SELECT id, balance_id, type, amount, date, note, created_at, updated_at FROM transactions WHERE id = ?",
+    )
+    .bind(id)
+    .first<TransactionRow>();
+  return row ? rowToTransaction(row) : null;
+}
+
 async function balanceWithQuantity(
   db: D1Database,
   row: BalanceRow,
@@ -198,6 +212,8 @@ personBalances.post("/", async (c) => {
   }
 
   let body: {
+    id?: unknown;
+    txId?: unknown;
     label?: unknown;
     amount?: unknown;
     date?: unknown;
@@ -224,19 +240,32 @@ personBalances.post("/", async (c) => {
   }
 
   const note = parseNote(body.note);
-  const balanceId = crypto.randomUUID();
-  const txId = crypto.randomUUID();
+  const balanceId = resolveId(body.id);
+  const txId = resolveId(body.txId);
   const now = new Date().toISOString();
 
   await enableForeignKeys(c.env.DB);
-  await c.env.DB.batch([
-    c.env.DB.prepare(
-      "INSERT INTO balances (id, person_id, label, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
-    ).bind(balanceId, personId, label, now, now),
-    c.env.DB.prepare(
-      "INSERT INTO transactions (id, balance_id, type, amount, date, note, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-    ).bind(txId, balanceId, "deposit", amount, date, note, now, now),
-  ]);
+  try {
+    // The batch is atomic, so a duplicate balanceId fails the whole thing
+    // cleanly rather than leaving a balance with no opening deposit.
+    await c.env.DB.batch([
+      c.env.DB.prepare(
+        "INSERT INTO balances (id, person_id, label, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+      ).bind(balanceId, personId, label, now, now),
+      c.env.DB.prepare(
+        "INSERT INTO transactions (id, balance_id, type, amount, date, note, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      ).bind(txId, balanceId, "deposit", amount, date, note, now, now),
+    ]);
+  } catch (err) {
+    if (!isDuplicateKeyError(err)) throw err;
+    const existing = await fetchBalanceRow(c.env.DB, balanceId);
+    if (!existing) throw err;
+    const txs = await fetchTransactionsForBalance(c.env.DB, balanceId);
+    return c.json(
+      { ...rowToBalance(existing), quantity: balanceQuantity(txs) },
+      200,
+    );
+  }
 
   return c.json(
     {
@@ -292,6 +321,7 @@ balances.post("/:id/transactions", async (c) => {
   }
 
   let body: {
+    id?: unknown;
     type?: unknown;
     amount?: unknown;
     date?: unknown;
@@ -301,6 +331,16 @@ balances.post("/:id/transactions", async (c) => {
     body = await c.req.json();
   } catch {
     return c.json({ error: "invalid_json" }, 400);
+  }
+
+  const id = resolveId(body.id);
+
+  // Checked before validation, not after. A retried return whose first attempt
+  // got through would otherwise be measured against the balance it already
+  // reduced, fail assertBalanceReturnAllowed, and be parked as a dead write.
+  const alreadyApplied = await fetchTransactionRow(c.env.DB, id);
+  if (alreadyApplied) {
+    return c.json(alreadyApplied, 200);
   }
 
   let type: "deposit" | "return";
@@ -332,15 +372,22 @@ balances.post("/:id/transactions", async (c) => {
     }
   }
 
-  const id = crypto.randomUUID();
   const now = new Date().toISOString();
 
   await enableForeignKeys(c.env.DB);
-  await c.env.DB.prepare(
-    "INSERT INTO transactions (id, balance_id, type, amount, date, note, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-  )
-    .bind(id, balanceId, type, amount, date, note, now, now)
-    .run();
+  try {
+    await c.env.DB.prepare(
+      "INSERT INTO transactions (id, balance_id, type, amount, date, note, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+    )
+      .bind(id, balanceId, type, amount, date, note, now, now)
+      .run();
+  } catch (err) {
+    // Lost a race with a concurrent retry of the same queued write.
+    if (!isDuplicateKeyError(err)) throw err;
+    const existing = await fetchTransactionRow(c.env.DB, id);
+    if (!existing) throw err;
+    return c.json(existing, 200);
+  }
 
   return c.json(
     rowToTransaction({
